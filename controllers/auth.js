@@ -5,12 +5,14 @@ const sendGridTransport = require("nodemailer-sendgrid-transport");
 const dotenv = require("dotenv");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
-
+//const emailRegex = require("email-regex");
 
 dotenv.config();
 
 const User = require("../models/users");
 const Otp = require("../models/otp");
+
+var emailregex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/
 
 const transporter = nodemailer.createTransport(sendGridTransport({
   auth:{
@@ -32,9 +34,13 @@ const email = req.body.email;
 const password = req.body.password;
 
 if (!(email && password && firstname && lastname)) {
-  res.status(400).send("All input is required");
+  res.status(400).send("All fields are required");
 }
+var validemail = emailregex.test(email);
 
+if (!validemail) {
+    return res.status(422).json({ error: "please enter a valid email" });
+}
 User.findOne({email:email})
 .then(user=>{
   if(user)
@@ -88,11 +94,38 @@ bcrypt.hash(password, 12)
 .catch(err => {
   if (!err.statusCode) {
     err.statusCode = 500;
-    console.log("email not send",err);
+    console.log(err);
   }
 });
 }
 
 exports.otpVerification =(req,res,next)=>{
-
+  const email = req.body.email;
+  const otp = req.body.otp;
+  Otp.findOne({email:email}).sort({createdAt : -1})
+  .then(user=>{
+    if(!user)
+    {
+      return res.status(422).json({ Error: "Otp is expired" });
+    }
+    if (user.otp !== otp) 
+    {
+        return res.status(422).json({ Error: "Wrong Otp" });
+    }
+    User.findOne({email:email})
+    .then(user=>{
+      user.isVerified = true;
+      user.save();
+    })
+      res.status(200).json({
+      status: "success",
+      data: user
+  })
+  })
+  .catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
+    }
+  });
 }
