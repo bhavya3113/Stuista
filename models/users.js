@@ -19,10 +19,8 @@ const userSchema = new schema({
     require:true
   },
   isVerified:{
-    type: Boolean,
-    default:false
-    // type: String,
-    // require: true,
+    type: String,
+    require: true
   }
 })
 

@@ -5,7 +5,6 @@ const sendGridTransport = require("nodemailer-sendgrid-transport");
 const dotenv = require("dotenv");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
-//const emailRegex = require("email-regex");
 
 dotenv.config();
 
@@ -58,7 +57,8 @@ bcrypt.hash(password, 12)
     firstname: firstname,
     lastname: lastname,
     email: email,
-    password: hashedPassword
+    password: hashedPassword,
+    isVerified: "false"
   });
    user.save();
 })
@@ -76,10 +76,10 @@ bcrypt.hash(password, 12)
     otp:otp
   });
    onetimepwd.save();
-   res.status(200).json({
-    message: "otp sent",
-    email: email,
-  });
+  //  res.status(200).json({
+  //   message: "otp sent",
+  //   email: email,
+  // });
   return transporter.sendMail({
     to:email,
     from:'learnatstuista@gmail.com',
@@ -114,7 +114,7 @@ exports.otpVerification =(req,res,next)=>{
     }
     User.findOne({email:email})
     .then(user=>{
-      user.isVerified = true;
+      user.isVerified = "true";
       user.save();
     })
       res.status(200).json({
@@ -128,4 +128,50 @@ exports.otpVerification =(req,res,next)=>{
       console.log(err);
     }
   });
+}
+exports.login=(req,res,next)=>{
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error("Validation Failed ");
+    error.statusCode = 422;
+    error.data = errors.array();
+    throw error;
+  }
+  
+  const email = req.body.email;
+  const password = req.body.password;
+  let registeredUser;
+  User.findOne({ email: email })
+    .then(user => {
+      if (!user) {
+        const error = new Error('User is not registered.');
+        error.statusCode = 401;
+        throw error;
+      }
+      registeredUser = user;
+      return bcrypt.compare(password, user.password);
+    })
+    .then(isEqual => {
+      if (!isEqual) {
+        const error = new Error('Incorrect password!');
+        error.statusCode = 401;
+        throw error;
+      }
+      const token = jwt.sign(
+        {
+          email: registeredUser.email,
+          userId: registeredUser._id.toString()
+        },
+        process.env.ACCESS_TOKEN_KEY,
+        { expiresIn: '1h' }
+      );
+      res.status(200).json({ token: token, userId: registeredUser._id.toString() });
+    })
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
 }
