@@ -27,11 +27,11 @@ exports.signup = (req, res, next) => {
     throw error;
   }
 
-const name = req.body.name;
+const fullname = req.body.fullname;
 const email = req.body.email;
 const password = req.body.password;
 
-if (!(email && password && name)) {
+if (!(email && password && fullname)) {
   res.status(400).send("All fields are required");
 }
 var validemail = emailregex.test(email);
@@ -53,7 +53,7 @@ User.findOne({email:email})
 bcrypt.hash(password, 12)
 .then(hashedPassword => {
   const user = new User({
-    name: name,
+    fullname: fullname,
     email: email,
     password: hashedPassword,
     isVerified: "false"
@@ -62,7 +62,7 @@ bcrypt.hash(password, 12)
 })
 .then(results=>{
   
-  // res.status(201).json({message:'user created', email:email,name:name});
+  res.status(201).json({message:'user created', email:email,fullname:fullname});
   let otp = otpGenerator.generate(6, {
     alphabets: false,
     specialChars: false,
@@ -70,7 +70,6 @@ bcrypt.hash(password, 12)
   });
   const onetimepwd = new Otp({
     email:email,
-    name:name,
     otp:otp
   });
    onetimepwd.save();
@@ -82,7 +81,7 @@ bcrypt.hash(password, 12)
     to:email,
     from:'learnatstuista@gmail.com',
     subject:'Verification OTP',
-    html:`<h4>Hello ${name},</h4>
+    html:`<h4>Hello ${fullname},</h4>
     <br>Please use this One time password to verify your account.<br>
     OTP:${otp}<br>
     Do not share it with anyone.<br>
@@ -137,7 +136,7 @@ exports.resendotp =(req,res,next)=>{
   });
   const onetimepwd = new Otp({
     email:email,
-    name:name,
+    fullname:fullname,
     otp:otp
   });
    onetimepwd.save();
@@ -149,7 +148,7 @@ exports.resendotp =(req,res,next)=>{
     to:email,
     from:'learnatstuista@gmail.com',
     subject:'Verification OTP',
-    html:`<h4>Hello ${name},</h4>
+    html:`<h4>Hello ${fullname},</h4>
     <br>Please use this One time password to verify your account.<br>
     OTP:${otp}<br>
     Do not share it with anyone.<br>
@@ -178,8 +177,41 @@ exports.login=(req,res,next)=>{
         error.statusCode = 401;
         throw error;
       }
+      if (user.isVerified=="false") {
+        // res.status(200).json({
+        //     message: "user not verified. kindly check your mail for otp and verify your account"
+        //   })
+
+        let otp = otpGenerator.generate(6, {
+          alphabets: false,
+          specialChars: false,
+          upperCase: false,
+        });
+        const onetimepwd = new Otp({
+          email:user.email,
+          otp:otp
+        });
+         onetimepwd.save();
+        //  res.status(200).json({
+        //   message: "otp sent",
+        //   email: email,
+        // });
+        
+        return transporter.sendMail({
+          to:email,
+          from:'learnatstuista@gmail.com',
+          subject:'Verification OTP',
+          html:`<h4>Hello ${user.fullname},</h4>
+          <br>Please use this One time password to verify your account.<br>
+          OTP:${otp}<br>
+          Do not share it with anyone.<br>
+          <h5>Thanks ,<br>Team Stuista</h5>`
+        })
+
+      }
+      if(user.isVerified == "true"){
       registeredUser = user;
-      return bcrypt.compare(password, user.password);
+      return bcrypt.compare(password, user.password);}
     })
     .then(isEqual => {
       if (!isEqual) {
@@ -187,6 +219,7 @@ exports.login=(req,res,next)=>{
         error.statusCode = 401;
         throw error;
       }
+
       const accesstoken = jwt.sign(
         {
           email: registeredUser.email,
@@ -204,7 +237,7 @@ exports.login=(req,res,next)=>{
         process.env.REFRESH_TOKEN_KEY,
         { expiresIn: '1y' }
       );
-      res.status(200).json({ accesstoken: accesstoken, refreshtoken: refreshtoken, userId: registeredUser._id.toString() });
+      res.status(200).json({ accesstoken:accesstoken,refreshtoken:refreshtoken,userId: registeredUser._id.toString() });
     })
     .catch(err => {
       if (!err.statusCode) {
