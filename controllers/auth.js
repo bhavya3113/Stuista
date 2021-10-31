@@ -158,7 +158,7 @@ exports.login=(req,res,next)=>{
         error.statusCode = 401;
         throw error;
       }
-      const token = jwt.sign(
+      const accesstoken = jwt.sign(
         {
           email: registeredUser.email,
           userId: registeredUser._id.toString()
@@ -166,7 +166,16 @@ exports.login=(req,res,next)=>{
         process.env.ACCESS_TOKEN_KEY,
         { expiresIn: '1h' }
       );
-      res.status(200).json({ token: token, userId: registeredUser._id.toString() });
+
+      const refreshtoken = jwt.sign(
+        {
+          email: registeredUser.email,
+          userId: registeredUser._id.toString()
+        },
+        process.env.REFRESH_TOKEN_KEY,
+        { expiresIn: '1y' }
+      );
+      res.status(200).json({ accesstoken: accesstoken, refreshtoken: refreshtoken, userId: registeredUser._id.toString() });
     })
     .catch(err => {
       if (!err.statusCode) {
