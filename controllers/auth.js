@@ -121,7 +121,6 @@ exports.resendotp =(req,res,next)=>{
   });
   const onetimepwd = new Otp({
     email:email,
-    fullname:fullname,
     otp:otp
   });
    onetimepwd.save();
@@ -132,6 +131,35 @@ exports.resendotp =(req,res,next)=>{
   return mail.sendEmail(email,otp,fullname);
 }
 
+exports.resetPassword=(req,res,next)=>{
+  const email = req.body.email;
+  const newPwd = req.body.newPwd;
+  const confirmPwd = req.body.confirmPwd;
+  if(newPwd != confirmPwd)
+  {
+    const error = new Error("Passwords do not match");
+    error.statusCode = 422;
+    throw error;
+  }
+  bcrypt.hash(newPwd, 12)
+  .then(hashedPassword => {
+  User.findOne({ email: email })
+      .then((user) => {
+        user.password = hashedPassword;
+        user.save()
+      .then((result) => {
+        res.json({ messsage: "new password saved", updatedUser: result });
+        })
+      })
+      .catch((err) => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+          console.log(err);
+        }
+        res.json({message: "password not saved"});
+      });
+})
+}
 
 exports.login=(req,res,next)=>{
 
@@ -192,7 +220,7 @@ exports.login=(req,res,next)=>{
           userId: registeredUser._id.toString()
         },
         process.env.ACCESS_TOKEN_KEY,
-        { expiresIn: '1h' }
+        { expiresIn: '8h' }
       );
 
       const refreshtoken = jwt.sign(
@@ -201,9 +229,9 @@ exports.login=(req,res,next)=>{
           userId: registeredUser._id.toString()
         },
         process.env.REFRESH_TOKEN_KEY,
-        { expiresIn: '1y' }
+        { expiresIn: '30days' }
       );
-      res.status(200).json({ accesstoken:accesstoken,refreshtoken:refreshtoken,userId: registeredUser._id.toString() });
+      res.status(200).json({userId: registeredUser._id.toString() });
     })
     .catch(err => {
       if (!err.statusCode) {
