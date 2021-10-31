@@ -1,7 +1,5 @@
 const bcrypt = require("bcryptjs");
 const {validationResult} = require("express-validator");
-const nodemailer = require("nodemailer");
-const sendGridTransport = require("nodemailer-sendgrid-transport");
 const dotenv = require("dotenv");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
@@ -10,14 +8,10 @@ dotenv.config();
 
 const User = require("../models/users");
 const Otp = require("../models/otp");
+const mail = require("../utils/sendemail");
 
 var emailregex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/
 
-const transporter = nodemailer.createTransport(sendGridTransport({
-  auth:{
-    api_key: process.env.API_KEY
-  }
-}))
 exports.signup = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -77,16 +71,7 @@ bcrypt.hash(password, 12)
   //   message: "otp sent",
   //   email: email,
   // });
-  return transporter.sendMail({
-    to:email,
-    from:'learnatstuista@gmail.com',
-    subject:'Verification OTP',
-    html:`<h4>Hello ${fullname},</h4>
-    <br>Please use this One time password to verify your account.<br>
-    OTP:${otp}<br>
-    Do not share it with anyone.<br>
-    <h5>Thanks ,<br>Team Stuista</h5>`
-  })
+  return mail.sendEmail(email,otp,fullname); 
 })
 .catch(err => {
   if (!err.statusCode) {
@@ -144,16 +129,7 @@ exports.resendotp =(req,res,next)=>{
   //   message: "otp sent",
   //   email: email,
   // });
-  return transporter.sendMail({
-    to:email,
-    from:'learnatstuista@gmail.com',
-    subject:'Verification OTP',
-    html:`<h4>Hello ${fullname},</h4>
-    <br>Please use this One time password to verify your account.<br>
-    OTP:${otp}<br>
-    Do not share it with anyone.<br>
-    <h5>Thanks ,<br>Team Stuista</h5>`
-  })
+  return mail.sendEmail(email,otp,fullname);
 }
 
 
@@ -192,21 +168,11 @@ exports.login=(req,res,next)=>{
           otp:otp
         });
          onetimepwd.save();
-        //  res.status(200).json({
-        //   message: "otp sent",
-        //   email: email,
-        // });
         
-        return transporter.sendMail({
-          to:email,
-          from:'learnatstuista@gmail.com',
-          subject:'Verification OTP',
-          html:`<h4>Hello ${user.fullname},</h4>
-          <br>Please use this One time password to verify your account.<br>
-          OTP:${otp}<br>
-          Do not share it with anyone.<br>
-          <h5>Thanks ,<br>Team Stuista</h5>`
-        })
+        const sendingotp = mail.sendEmail(email,otp,user.fullname);
+        const error = new Error('User not verified.Email has been sent for verification');
+        error.statusCode = 401;
+        throw error;
 
       }
       if(user.isVerified == "true"){
