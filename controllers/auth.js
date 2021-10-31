@@ -27,12 +27,11 @@ exports.signup = (req, res, next) => {
     throw error;
   }
 
-const firstname = req.body.firstname;
-const lastname = req.body.lastname;
+const name = req.body.name;
 const email = req.body.email;
 const password = req.body.password;
 
-if (!(email && password && firstname && lastname)) {
+if (!(email && password && name)) {
   res.status(400).send("All fields are required");
 }
 var validemail = emailregex.test(email);
@@ -54,8 +53,7 @@ User.findOne({email:email})
 bcrypt.hash(password, 12)
 .then(hashedPassword => {
   const user = new User({
-    firstname: firstname,
-    lastname: lastname,
+    name: name,
     email: email,
     password: hashedPassword,
     isVerified: "false"
@@ -64,7 +62,7 @@ bcrypt.hash(password, 12)
 })
 .then(results=>{
   
-  // res.status(201).json({message:'user created', email:email,firstname:firstname});
+  // res.status(201).json({message:'user created', email:email,name:name});
   let otp = otpGenerator.generate(6, {
     alphabets: false,
     specialChars: false,
@@ -72,7 +70,7 @@ bcrypt.hash(password, 12)
   });
   const onetimepwd = new Otp({
     email:email,
-    firstname:firstname,
+    name:name,
     otp:otp
   });
    onetimepwd.save();
@@ -84,7 +82,7 @@ bcrypt.hash(password, 12)
     to:email,
     from:'learnatstuista@gmail.com',
     subject:'Verification OTP',
-    html:`<h4>Hello ${firstname},</h4>
+    html:`<h4>Hello ${name},</h4>
     <br>Please use this One time password to verify your account.<br>
     OTP:${otp}<br>
     Do not share it with anyone.<br>
@@ -100,6 +98,7 @@ bcrypt.hash(password, 12)
 }
 
 exports.otpVerification =(req,res,next)=>{
+
   const email = req.body.email;
   const otp = req.body.otp;
   Otp.findOne({email:email}).sort({createdAt : -1})
@@ -129,6 +128,36 @@ exports.otpVerification =(req,res,next)=>{
     }
   });
 }
+
+exports.resendotp =(req,res,next)=>{
+  let otp = otpGenerator.generate(6, {
+    alphabets: false,
+    specialChars: false,
+    upperCase: false,
+  });
+  const onetimepwd = new Otp({
+    email:email,
+    name:name,
+    otp:otp
+  });
+   onetimepwd.save();
+  //  res.status(200).json({
+  //   message: "otp sent",
+  //   email: email,
+  // });
+  return transporter.sendMail({
+    to:email,
+    from:'learnatstuista@gmail.com',
+    subject:'Verification OTP',
+    html:`<h4>Hello ${name},</h4>
+    <br>Please use this One time password to verify your account.<br>
+    OTP:${otp}<br>
+    Do not share it with anyone.<br>
+    <h5>Thanks ,<br>Team Stuista</h5>`
+  })
+}
+
+
 exports.login=(req,res,next)=>{
 
   const errors = validationResult(req);
