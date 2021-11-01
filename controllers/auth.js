@@ -132,36 +132,86 @@ exports.resendotp =(req,res,next)=>{
   // });
   return mail.sendEmail(email,otp,fullname);
 }
-
+exports.verifybeforereset = (req,res,next)=>{
+  const email = req.body.email;
+  const fullname = req.body.fullname;
+  User.findOne({ email: email })
+  .then(user=>{
+    if(!user)
+    {
+     return res.send("not registered");
+    }
+    let otp = otpGenerator.generate(6, {
+      alphabets: false,
+      specialChars: false,
+      upperCase: false,
+    });
+    const onetimepwd = new Otp({
+      email:email,
+      otp:otp
+    });
+     onetimepwd.save();
+    return mail.sendEmail(email,otp,fullname);
+  })
+  .catch((err) => {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      throw err;
+    }
+    //res.json({message: "user is not registered"});
+  });
+ 
+}
 exports.resetPassword=(req,res,next)=>{
   const email = req.body.email;
   const newPwd = req.body.newPwd;
   const confirmPwd = req.body.confirmPwd;
-  if(newPwd != confirmPwd)
-  {
-    const error = new Error("Passwords do not match");
-    error.statusCode = 422;
-    throw error;
-  }
-  bcrypt.hash(newPwd, 12)
-  .then(hashedPassword => {
-  User.findOne({ email: email })
-      .then((user) => {
-        user.password = hashedPassword;
-        user.save()
-      .then((result) => {
-        res.json({ messsage: "new password saved",result });
+  const otp = req.body.otp;
+  Otp.findOne({email:email}).sort({createdAt : -1})
+  .then(user=>{
+    if(!user)
+    {
+      return res.status(422).json({ Error: "Otp is expired" });
+    }
+    if (user.otp !== otp) 
+    {
+        return res.status(422).json({ Error: "Wrong Otp" });
+    }
+    User.findOne({email:email})
+    .then(user=>{
+      if(newPwd != confirmPwd)
+      {
+        const error = new Error("Passwords do not match");
+        error.statusCode = 422;
+        throw error;
+      }
+      bcrypt.hash(newPwd, 12)
+      .then(hashedPassword => {
+      User.findOne({ email: email })
+          .then((user) => {
+            user.password = hashedPassword;
+            user.save()
+          .then((result) => {
+            res.json({ messsage: "new password saved",result });
+            })
+          })
+          .catch((err) => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+              console.log(err);
+            }
+            res.json({message: "password not saved"});
+          });
         })
-      })
-      .catch((err) => {
-        if (!err.statusCode) {
-          err.statusCode = 500;
-          console.log(err);
-        }
-        res.json({message: "password not saved"});
-      });
+       .catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
+    }
+  });
+});
 })
-}
+};
 
 exports.login=(req,res,next)=>{
 
