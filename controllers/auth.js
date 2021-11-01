@@ -148,7 +148,7 @@ exports.resetPassword=(req,res,next)=>{
         user.password = hashedPassword;
         user.save()
       .then((result) => {
-        res.json({ messsage: "new password saved", updatedUser: result });
+        res.json({ messsage: "new password saved",result });
         })
       })
       .catch((err) => {
@@ -229,9 +229,9 @@ exports.login=(req,res,next)=>{
           userId: registeredUser._id.toString()
         },
         process.env.REFRESH_TOKEN_KEY,
-        { expiresIn: '30days' }
+        { expiresIn: '30d' }
       );
-      res.status(200).json({userId: registeredUser._id.toString() });
+      res.status(200).json({accesstoken,refreshtoken,userId: registeredUser._id.toString() });
     })
     .catch(err => {
       if (!err.statusCode) {
