@@ -272,18 +272,9 @@ exports.login=(req,res,next)=>{
           userId: registeredUser._id.toString()
         },
         process.env.ACCESS_TOKEN_KEY,
-        { expiresIn: '8h' }
+        { expiresIn: '24h' }
       );
-
-      const refreshtoken = jwt.sign(
-        {
-          email: registeredUser.email,
-          userId: registeredUser._id.toString()
-        },
-        process.env.REFRESH_TOKEN_KEY,
-        { expiresIn: '30d' }
-      );
-      res.status(200).json({accesstoken,refreshtoken,userId: registeredUser._id.toString() });
+      res.status(200).json({accesstoken,userId: registeredUser._id.toString() });
     })
     .catch(err => {
       if (!err.statusCode) {
