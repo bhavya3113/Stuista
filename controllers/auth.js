@@ -114,6 +114,8 @@ exports.otpVerification =(req,res,next)=>{
 }
 
 exports.resendotp =(req,res,next)=>{
+  const email = req.body.email;
+  const fullname = req.body.fullname;
   let otp = otpGenerator.generate(6, {
     alphabets: false,
     specialChars: false,
