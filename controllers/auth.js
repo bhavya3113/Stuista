@@ -67,10 +67,10 @@ bcrypt.hash(password, 12)
     otp:otp
   });
    onetimepwd.save();
-  //  res.status(200).json({
-  //   message: "otp sent",
-  //   email: email,
-  // });
+   res.status(200).json({
+    message: "otp sent",
+    email: email,
+  });
   return mail.sendEmail(email,otp,fullname); 
 })
 .catch(err => {
@@ -126,10 +126,10 @@ exports.resendotp =(req,res,next)=>{
     otp:otp
   });
    onetimepwd.save();
-  //  res.status(200).json({
-  //   message: "otp sent",
-  //   email: email,
-  // });
+   res.status(200).json({
+    message: "otp sent",
+    email: email,
+  });
   return mail.sendEmail(email,otp,fullname);
 }
 exports.verifybeforereset = (req,res,next)=>{
@@ -151,6 +151,10 @@ exports.verifybeforereset = (req,res,next)=>{
       otp:otp
     });
      onetimepwd.save();
+     res.status(200).json({
+      message: "otp sent",
+      email: email,
+    });
     return mail.sendEmail(email,otp,fullname);
   })
   .catch((err) => {
@@ -162,10 +166,8 @@ exports.verifybeforereset = (req,res,next)=>{
   });
  
 }
-exports.resetPassword=(req,res,next)=>{
+exports.checkotpbeforereset=(req,res,next)=>{
   const email = req.body.email;
-  const newPwd = req.body.newPwd;
-  const confirmPwd = req.body.confirmPwd;
   const otp = req.body.otp;
   Otp.findOne({email:email}).sort({createdAt : -1})
   .then(user=>{
@@ -179,6 +181,21 @@ exports.resetPassword=(req,res,next)=>{
     }
     User.findOne({email:email})
     .then(user=>{
+          return res.status(200).json({message: "verified.Proceed to reset password"});
+    })
+    .catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
+    }
+  });
+});
+}
+exports.resetPassword=(req,res,next)=>{
+  const email = req.body.email;
+  const newPwd = req.body.newPwd;
+  const confirmPwd = req.body.confirmPwd;
+   
       if(newPwd != confirmPwd)
       {
         const error = new Error("Passwords do not match");
@@ -190,17 +207,15 @@ exports.resetPassword=(req,res,next)=>{
       User.findOne({ email: email })
           .then((user) => {
             user.password = hashedPassword;
-            user.save()
-          .then((result) => {
-            res.json({ messsage: "new password saved",result });
-            })
+            user.save();
+            res.json({ messsage: "new password saved",user });
           })
           .catch((err) => {
+            res.json({message: "password not saved"});
             if (!err.statusCode) {
               err.statusCode = 500;
               console.log(err);
             }
-            res.json({message: "password not saved"});
           });
         })
        .catch(err => {
@@ -209,8 +224,6 @@ exports.resetPassword=(req,res,next)=>{
       console.log(err);
     }
   });
-});
-})
 };
 
 exports.login=(req,res,next)=>{
@@ -234,9 +247,9 @@ exports.login=(req,res,next)=>{
         throw error;
       }
       if (user.isVerified=="false") {
-        // res.status(200).json({
-        //     message: "user not verified. kindly check your mail for otp and verify your account"
-        //   })
+        res.status(200).json({
+            message: "user not verified. kindly check your mail for otp and verify your account"
+          })
 
         let otp = otpGenerator.generate(6, {
           alphabets: false,

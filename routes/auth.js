@@ -11,12 +11,13 @@ const isAuth = require("../middleware/isAuth");
 // })
 
 router.post("/signup",[
-  body("password").trim().isLength({ min: 6 })
+  body("password").trim().isLength({ min: 8 })
 ], 
 authController.signup);
 router.post("/verifyotp",authController.otpVerification);
 router.post("/resendotp",authController.resendotp);
 router.post("/verifybeforereset",authController.verifybeforereset);
+router.post("/checkotpbeforereset",authController.checkotpbeforereset);
 router.post("/resetpassword",authController.resetPassword);
 // router.post("/login",authController.login);
 router.post("/login",isAuth,authController.login);
