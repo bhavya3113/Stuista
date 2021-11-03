@@ -6,6 +6,10 @@ const courseSchema = new schema({
     type: String,
     require: true
   },
+  category:{
+    type: String,
+    require: true
+  },
   duration:{
     type: String,
     require: true
@@ -43,13 +47,13 @@ const courseSchema = new schema({
     require: true
   },
   imageUrl:{
-    type:string,
+    type: String,
     require:true
   },
   instructorDetails:{
     type: schema.Types.ObjectId,
     require:true,
-    ref:'user',
+    ref:'users',
   }
 },
 { timestamps: true }

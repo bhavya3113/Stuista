@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose"); 
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
+const courseRoutes = require("./routes/course");
 
 dotenv.config();
 const app = express();
@@ -17,6 +18,7 @@ app.use((req, res, next) => {
 
 
 app.use('/auth',authRoutes);
+app.use('/courses',courseRoutes);
 
 app.use((error, req, res, next) => {
   console.log(error);

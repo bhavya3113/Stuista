@@ -17,7 +17,15 @@ const userSchema = new schema({
   isVerified:{
     type: String,
     require: true
-  }
+  },
+  cart:[{
+    type:schema.Types.ObjectId,
+    ref:"course"
+  }],
+  favourites:[{
+    type:schema.Types.ObjectId,
+    ref:"course"
+  }]
 })
 
 module.exports = mongoose.model("users",userSchema);
