@@ -7,6 +7,6 @@ const isAuth = require("../middleware/isAuth");
 
 router.get("/allCourses",courseController.allCourses);
 router.get("/:category",courseController.categorywise);
-
+router.post("/addcourse",courseController.addCourse);
 
 module.exports=router;

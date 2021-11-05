@@ -1,11 +1,36 @@
 const express = require("express");
 const mongoose = require("mongoose"); 
+const path = require('path');
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const courseRoutes = require("./routes/course");
+const multer = require('multer');
 
 dotenv.config();
 const app = express();
+
+
+const fileStorage = multer.diskStorage({
+  destination:(req,file,cb)=>{
+    cb(null,'images');
+  },
+  filename: (req,file,cb)=>{
+    cb(null, new Date().toDateString() + '-' + file.originalname)
+  }
+})
+
+const fileFilter=(req,file,cb)=>{
+  var ext = path.extname(file.originalname);
+  if(ext == '.png' || ext == '.jpg' || ext == '.jpeg')
+  {
+    cb(null,true);
+  }
+  else {cb(null,false);
+        console.log("wrong file type")}
+}
+
+app.use(multer({storage:fileStorage,fileFilter:fileFilter}).single('image'))
+
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 

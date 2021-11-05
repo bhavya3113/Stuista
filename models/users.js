@@ -18,6 +18,10 @@ const userSchema = new schema({
     type: String,
     require: true
   },
+  course:[{
+    type:schema.Types.ObjectId,
+    ref:"course"
+  }],
   cart:[{
     type:schema.Types.ObjectId,
     ref:"course"
