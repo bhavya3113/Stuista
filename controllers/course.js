@@ -62,3 +62,129 @@ exports.addCourse=(req,res,next)=>{
     res.status(400).json({'Error in adding Course': err})
   })
 }
+
+exports.addtocart=(req,res,next)=>{
+  const userId = req.body._id;
+  const courseId = req.params.courseid;
+
+  console.log(userId , courseId);
+  User.findById(userId)
+  .then(user=>{
+    const index = user.cart.findIndex(courseid => courseId==courseid)
+    if(index==-1)
+    {
+      user.cart.push(courseId);
+      user.save();
+    }
+    else{
+      return res.status(400).json({ 'Already in cart': err });
+    }
+     return res.status(200).json('Added to cart');
+    })
+  .catch(err=>{
+    console.log("error in adding to cart", err);
+     res.status(400).json({ 'Error in adding to cart': err });
+  })
+  }
+
+  exports.removefromcart=(req,res,next)=>{
+    const userId = req.body._id;
+    const courseId = req.params.courseid;
+  
+    User.findById(userId)
+    .then(user=>{
+      const index = user.cart.findIndex(courseid => courseId==courseid)
+      if(index==-1)
+      {
+       return res.status(400).json({ 'Not in cart': err });
+      }
+     else
+     {
+      user.cart.splice(index,1);
+      user.save(); 
+     }
+     return res.status(200).json('Removed from cart');
+    })
+    .catch(err=>{
+      console.log("error in removing from cart", err);
+      res.status(400).json({ 'Error in removing from cart': err });
+    })
+    }
+
+    exports.cart =(req,res,next)=>{
+      const userId = req.body._id;
+      User.findById(userId)
+      .populate('cart')
+      .execPopulate()
+      .then(user => {
+        const course = user.cart;
+        res.status(200).json({'Your Cart':course});
+      })
+    .catch(err=>{
+      console.log("error in displaying cart", err);
+      res.status(400).json({ 'Error in displaying cart': err });
+    })
+    }
+
+    exports.addtofav=(req,res,next)=>{
+      const userId = req.body._id;
+      const courseId = req.params.courseid;
+    
+      console.log(userId , courseId);
+      User.findById(userId)
+      .then(user=>{
+        const index = user.favourites.findIndex(courseid => courseId==courseid)
+        if(index==-1)
+        {
+          user.favourites.push(courseId);
+          user.save();
+        }
+        else{
+          return res.status(400).json({ 'Already in favourites': err });
+        }
+         return res.status(200).json('Added to favourites');
+        })
+      .catch(err=>{
+        console.log("error in adding to favourites", err);
+         res.status(400).json({ 'Error in adding to favourites': err });
+      })
+      }
+    
+      exports.removefromfav=(req,res,next)=>{
+        const userId = req.body._id;
+        const courseId = req.params.courseid;
+      
+        User.findById(userId)
+        .then(user=>{
+          const index = user.cart.findIndex(courseid => courseId==courseid)
+          if(index==-1)
+          {
+           return res.status(400).json({ 'Not in favourites': err });
+          }
+         else
+         {
+          user.favourites.splice(index,1);
+          user.save(); 
+         }
+         return res.status(200).json('Removed from favourites');
+        })
+        .catch(err=>{
+          console.log("error in removing from favourites", err);
+          res.status(400).json({ 'Error in removing from favourites': err });
+        })
+        }
+    
+        exports.fav =(req,res,next)=>{
+          const userId = req.body._id;
+          User.findById(userId)
+          .populate('favourites')
+          .execPopulate()
+          .then(user => {
+            const course = user.favourites;
+            res.status(200).json({'Your favourites':course});
+          })
+        .catch(err=>{
+          console.log("error in displaying favourites", err);
+          res.status(400).json({ 'Error in displaying favourites': err });
+        })
+        }
