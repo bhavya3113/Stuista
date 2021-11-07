@@ -3,6 +3,7 @@ const Course = require("../models/course");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
+  .populate('instructorDetails','fullname email')
   .then(course=>{
     res.status(200).json(course);
   })
@@ -14,6 +15,7 @@ exports.allCourses=(req,res,next)=>{
 exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
   Course.find({category:categorywiseCourses})
+  .populate('instructorDetails','fullname email')
   .then(course=>{
     // console.log(categorywiseCourses);
     res.status(200).json(course);
@@ -34,11 +36,11 @@ exports.addCourse=(req,res,next)=>{
   const price = req.body.price;
   const language = req.body.language;
   const skillsLearned = req.body.skillsLearned;
-  const instructorDetails = req.body._id;
+  const instructorDetails = req.userId;
   const image = req.file;
   const imageUrl = image.path;
   // console.log(image);
-  console.log(instructorDetails);
+  // console.log(instructorDetails);
 
   const course =new Course({
    title: title,
@@ -64,10 +66,10 @@ exports.addCourse=(req,res,next)=>{
 }
 
 exports.addtocart=(req,res,next)=>{
-  const userId = req.body._id;
+  const userId = req.userId;
   const courseId = req.params.courseid;
 
-  console.log(userId , courseId);
+  // console.log(userId , courseId);
   User.findById(userId)
   .then(user=>{
     const index = user.cart.findIndex(courseid => courseId==courseid)
@@ -77,7 +79,7 @@ exports.addtocart=(req,res,next)=>{
       user.save();
     }
     else{
-      return res.status(400).json({ 'Already in cart': err });
+      return res.status(400).json('Already in cart');
     }
      return res.status(200).json('Added to cart');
     })
@@ -88,7 +90,7 @@ exports.addtocart=(req,res,next)=>{
   }
 
   exports.removefromcart=(req,res,next)=>{
-    const userId = req.body._id;
+    const userId =  req.userId;
     const courseId = req.params.courseid;
   
     User.findById(userId)
@@ -96,7 +98,7 @@ exports.addtocart=(req,res,next)=>{
       const index = user.cart.findIndex(courseid => courseId==courseid)
       if(index==-1)
       {
-       return res.status(400).json({ 'Not in cart': err });
+       return res.status(400).json('Not in cart');
       }
      else
      {
@@ -111,14 +113,14 @@ exports.addtocart=(req,res,next)=>{
     })
     }
 
-    exports.cart =(req,res,next)=>{
-      const userId = req.body._id;
+    exports.Cart =(req,res,next)=>{
+      const userId = req.params.userid;
       User.findById(userId)
       .populate('cart')
       .execPopulate()
       .then(user => {
         const course = user.cart;
-        res.status(200).json({'Your Cart':course});
+        res.status(200).json('Your Cart');
       })
     .catch(err=>{
       console.log("error in displaying cart", err);
@@ -127,10 +129,10 @@ exports.addtocart=(req,res,next)=>{
     }
 
     exports.addtofav=(req,res,next)=>{
-      const userId = req.body._id;
+      const userId = req.userId;
       const courseId = req.params.courseid;
     
-      console.log(userId , courseId);
+      // console.log(userId , courseId);
       User.findById(userId)
       .then(user=>{
         const index = user.favourites.findIndex(courseid => courseId==courseid)
@@ -140,7 +142,7 @@ exports.addtocart=(req,res,next)=>{
           user.save();
         }
         else{
-          return res.status(400).json({ 'Already in favourites': err });
+          return res.status(400).json('Already in favourites');
         }
          return res.status(200).json('Added to favourites');
         })
@@ -151,7 +153,7 @@ exports.addtocart=(req,res,next)=>{
       }
     
       exports.removefromfav=(req,res,next)=>{
-        const userId = req.body._id;
+        const userId = req.userId;
         const courseId = req.params.courseid;
       
         User.findById(userId)
@@ -159,7 +161,7 @@ exports.addtocart=(req,res,next)=>{
           const index = user.cart.findIndex(courseid => courseId==courseid)
           if(index==-1)
           {
-           return res.status(400).json({ 'Not in favourites': err });
+           return res.status(400).json('Not in favourites');
           }
          else
          {
@@ -175,7 +177,7 @@ exports.addtocart=(req,res,next)=>{
         }
     
         exports.fav =(req,res,next)=>{
-          const userId = req.body._id;
+          const userId = req.params.userid;
           User.findById(userId)
           .populate('favourites')
           .execPopulate()

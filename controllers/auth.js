@@ -67,10 +67,10 @@ bcrypt.hash(password, 12)
     otp:otp
   });
    onetimepwd.save();
-   res.status(200).json({
-    message: "otp sent",
-    email: email,
-  });
+  //  res.status(200).json({
+  //   message: "otp sent",
+  //   email: email,
+  // });
   return mail.sendEmail(email,otp,fullname); 
 })
 .catch(err => {

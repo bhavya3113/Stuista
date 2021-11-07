@@ -7,13 +7,13 @@ const isAuth = require("../middleware/isAuth");
 
 router.get("/allCourses",courseController.allCourses);
 router.get("/:category",courseController.categorywise);
-router.post("/addcourse",courseController.addCourse);
+router.post("/addcourse",isAuth,courseController.addCourse);
 
+router.get("/:userid/cart",isAuth,courseController.Cart);
 router.post("/:coursename/:courseid",isAuth,courseController.addtocart);
-router.post("/:userid/cart/remove",isAuth,courseController.removefromcart);
-router.get("/:userid/cart",isAuth,courseController.cart);
+router.post("/:courseid/cart/remove",isAuth,courseController.removefromcart);
 
-router.post("/:coursename/:courseid",isAuth,courseController.addtofav);
-router.post("/:userid/favourites/remove",isAuth,courseController.removefromfav);
+router.post("/favourites/:coursename/:courseid",isAuth,courseController.addtofav);
+router.post("/:courseid/favourites/remove",isAuth,courseController.removefromfav);
 router.get("/:userid/favourites",isAuth,courseController.fav);
 module.exports=router;
