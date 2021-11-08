@@ -31,7 +31,7 @@ if (!(email && password && fullname)) {
 var validemail = emailregex.test(email);
 
 if (!validemail) {
-    return res.status(422).json({ error: "please enter a valid email" });
+   res.status(422).json({ error: "please enter a valid email" });
 }
 User.findOne({email:email})
 .then(user=>{
@@ -41,44 +41,51 @@ User.findOne({email:email})
     // error.statusCode = 400;
     // throw error;
     
-    return res.status(422).json({ Error: "User is already registered" })
+    res.status(422).json({ Error: "User is already registered" })
   }
-});
-bcrypt.hash(password, 12)
-.then(hashedPassword => {
-  const user = new User({
-    fullname: fullname,
-    email: email,
-    password: hashedPassword,
-    isVerified: "false"
-  });
-   user.save();
+  else{
+
+    bcrypt.hash(password, 12)
+    .then(hashedPassword => {
+      const user = new User({
+        fullname: fullname,
+        email: email,
+        password: hashedPassword,
+        isVerified: "false"
+      });
+       user.save();
+    })
+    .then(results=>{
+      
+      res.status(201).json({message:'user created', email:email,fullname:fullname});
+      let otp = otpGenerator.generate(6, {
+        alphabets: false,
+        specialChars: false,
+        upperCase: false,
+      });
+      const onetimepwd = new Otp({
+        email:email,
+        otp:otp
+      });
+       onetimepwd.save();
+      //  res.status(200).json({
+      //   message: "otp sent",
+      //   email: email,
+      // });
+      return mail.sendEmail(email,otp,fullname); 
+    })
+    .catch(err => {
+      res.status(401).json({"Error in registering user" : err })
+    
+    })
+  }
 })
-.then(results=>{
-  
-  res.status(201).json({message:'user created', email:email,fullname:fullname});
-  let otp = otpGenerator.generate(6, {
-    alphabets: false,
-    specialChars: false,
-    upperCase: false,
-  });
-  const onetimepwd = new Otp({
-    email:email,
-    otp:otp
-  });
-   onetimepwd.save();
-  //  res.status(200).json({
-  //   message: "otp sent",
-  //   email: email,
-  // });
-  return mail.sendEmail(email,otp,fullname); 
-})
-.catch(err => {
+.catch(err=>{
   if (!err.statusCode) {
     err.statusCode = 500;
     console.log(err);
   }
-});
+})
 }
 
 exports.otpVerification =(req,res,next)=>{

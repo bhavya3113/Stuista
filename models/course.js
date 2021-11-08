@@ -54,7 +54,11 @@ const courseSchema = new schema({
     type: schema.Types.ObjectId,
     require:true,
     ref:'users',
-  }
+  },
+  videosArray:[{
+    type: String,
+    require: true
+  }]
 },
 { timestamps: true }
 )

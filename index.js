@@ -12,27 +12,46 @@ const app = express();
 
 const fileStorage = multer.diskStorage({
   destination:(req,file,cb)=>{
-    cb(null,'images');
+    if (file.fieldname == 'image')
+      cb(null, 'images');
+    else 
+    cb(null,'videos');
   },
   filename: (req,file,cb)=>{
-    cb(null, new Date().toDateString() + '-' + file.originalname)
+    cb(null,  file.fieldname + '-' + file.originalname)
   }
 })
 
 const fileFilter=(req,file,cb)=>{
   var ext = path.extname(file.originalname);
-  if(ext == '.png' || ext == '.jpg' || ext == '.jpeg')
+  if (file.fieldname == "image")
   {
-    cb(null,true);
+    if(ext == '.png' || ext == '.jpg' || ext == '.jpeg')
+       cb(null,true);
+    else {
+      cb(null,false);
+      console.log("wrong file type")}
   }
-  else {cb(null,false);
-        console.log("wrong file type")}
+  else if(file.fieldname === "video")
+  {
+    if(ext == '.mp4')
+       cb(null,true);
+    else {
+      cb(null,false);
+      console.log("wrong file type")}
+  }
 }
 
-app.use(multer({storage:fileStorage,fileFilter:fileFilter}).single('image'))
-
+app.use(multer({storage:fileStorage,fileFilter:fileFilter}).array('video', 10));
+// .single('image'));
+// .fields([
+//   { name: 'image'},
+//   { name: 'video'}
+// ]));
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
+app.use('/images',express.static(path.join(__dirname, 'images')));
+app.use('/videos',express.static(path.join(__dirname, 'videos')));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

@@ -3,11 +3,15 @@ const router = express.Router();
 
 const course = require("../models/course");
 const courseController = require("../controllers/course");
+const instructorController = require("../controllers/instructor");
 const isAuth = require("../middleware/isAuth");
 
 router.get("/allCourses",courseController.allCourses);
 router.get("/:category",courseController.categorywise);
-router.post("/addcourse",isAuth,courseController.addCourse);
+
+router.post("/addcourse",isAuth,instructorController.addCourse);
+router.post("/:courseid/addvideo",isAuth,instructorController.addVideo)
+
 
 router.get("/:userid/cart",isAuth,courseController.Cart);
 router.post("/:coursename/:courseid",isAuth,courseController.addtocart);
