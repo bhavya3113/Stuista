@@ -116,11 +116,12 @@ exports.addtocart=(req,res,next)=>{
     exports.Cart =(req,res,next)=>{
       const userId = req.params.userid;
       User.findById(userId)
+      // User.findById({'_id': '6182558da75d18d6f2964024'})
       .populate('cart')
-      .execPopulate()
+      .exec()
       .then(user => {
         const course = user.cart;
-        res.status(200).json('Your Cart');
+        res.status(200).json({'Your Cart':course});
       })
     .catch(err=>{
       console.log("error in displaying cart", err);
@@ -180,7 +181,7 @@ exports.addtocart=(req,res,next)=>{
           const userId = req.params.userid;
           User.findById(userId)
           .populate('favourites')
-          .execPopulate()
+          .exec()
           .then(user => {
             const course = user.favourites;
             res.status(200).json({'Your favourites':course});
