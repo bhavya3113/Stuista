@@ -29,7 +29,15 @@ const userSchema = new schema({
   favourites:[{
     type:schema.Types.ObjectId,
     ref:"course"
-  }]
+  }],
+  experience:{
+    type: String,
+    require:true
+  },
+  areaofexpertise:{
+    type: String,
+    require:true
+  }
 })
 
 module.exports = mongoose.model("users",userSchema);

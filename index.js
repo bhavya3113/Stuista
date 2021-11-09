@@ -4,6 +4,7 @@ const path = require('path');
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const courseRoutes = require("./routes/course");
+const instructorRoutes = require("./routes/instructor");
 const multer = require('multer');
 
 dotenv.config();
@@ -63,6 +64,7 @@ app.use((req, res, next) => {
 
 app.use('/auth',authRoutes);
 app.use('/courses',courseRoutes);
+app.use(instructorRoutes);
 
 app.use((error, req, res, next) => {
   console.log(error);

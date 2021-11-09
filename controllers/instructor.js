@@ -3,6 +3,31 @@ const Course = require("../models/course");
 
 const { validationResult } = require('express-validator');
 
+
+exports.instructorProfile=(req,res,next)=>{
+  const userId = req.userId;
+  const experience = req.body.experience;
+  const areaofexpertise = req.body.areaofexpertise;
+  
+  User.findById(userId)
+  .then(user=>{
+    user.experience = experience,
+    user.areaofexpertise = areaofexpertise
+
+    user.save();
+  })
+  .then(result=>{
+    res.status(200).json("instructor profile created");
+  })
+  .catch(err=>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
+    }
+  })
+}
+
+
 exports.addCourse=(req,res,next)=>{
 
   const errors = validationResult(req);
