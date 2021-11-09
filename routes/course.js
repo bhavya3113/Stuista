@@ -10,7 +10,9 @@ router.get("/allCourses",courseController.allCourses);
 router.get("/:category",courseController.categorywise);
 
 router.post("/addcourse",isAuth,instructorController.addCourse);
-router.post("/:courseid/addvideo",isAuth,instructorController.addVideo)
+router.post("/:courseid/addvideo",isAuth,instructorController.addVideo);
+router.post("/editcourse/:courseid",isAuth,instructorController.editCourse);
+router.post("/deletecourse/:courseid",isAuth,instructorController.deleteCourse);
 
 
 router.get("/:userid/cart",isAuth,courseController.Cart);

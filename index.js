@@ -42,12 +42,12 @@ const fileFilter=(req,file,cb)=>{
   }
 }
 
-app.use(multer({storage:fileStorage,fileFilter:fileFilter}).array('video', 10));
+app.use(multer({storage:fileStorage,fileFilter:fileFilter})//.array('video', 10));
 // .single('image'));
-// .fields([
-//   { name: 'image'},
-//   { name: 'video'}
-// ]));
+.fields([
+  { name: 'image'},
+  { name: 'video'}
+]));
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use('/images',express.static(path.join(__dirname, 'images')));
