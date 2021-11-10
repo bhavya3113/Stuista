@@ -151,3 +151,54 @@ exports.addtocart=(req,res,next)=>{
           res.status(400).json({ 'Error in displaying favourites': err });
         })
         }
+
+        exports.buynow=(req,res,next)=>{
+          const courseId = req.params.courseid;
+          const userid = req.userId;
+          User.findById(userid)
+          .then(user=>{
+            const cartindex = user.cart.findIndex(courseid => courseId==courseid)
+            const mycoursesindex = user.mycourses.findIndex(courseid => courseId==courseid)
+            if(mycoursesindex != -1){
+              return res.status(400).json("you have already bought the course");
+            }
+            if(cartindex != -1){
+              user.cart.pull(courseId);
+              user.mycourses.push(courseId);
+              user.save();
+            }
+             return res.status(200).json("payment successful");
+          })
+          .catch(err=>{
+            console.log(err);
+            res.status(400).json({ 'payment unsuccessful': err });
+          })
+        }
+
+        exports.buyfromcart=(req,res,next)=>{
+          let totalprice=0;
+          const userid = req.params.userid;
+          User.findById(userid)
+          .populate('cart')
+          .then(user=>{
+            if(user.cart.length == 0)
+            {
+              res.status(400).json('Cart is empty');
+            }
+            const length =  user.cart.length;
+            for(var i=0;i<length;i++)
+            {
+              user.mycourses.push(user.cart[i]);
+              totalprice += parseInt(user.cart[i].price);
+            }
+            user.cart=[];
+            user.save();
+          })
+          .then(result=>{
+            return res.status(200).json({"payment successful":totalprice});
+          })
+          .catch(err=>{
+            console.log(err);
+            res.status(400).json({ 'payment unsuccessful': err });
+          })
+        }

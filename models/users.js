@@ -18,6 +18,10 @@ const userSchema = new schema({
     type: String,
     require: true
   },
+  mycourses:[{
+    type:schema.Types.ObjectId,
+    ref:"course"
+  }],
   course:[{
     type:schema.Types.ObjectId,
     ref:"course"
