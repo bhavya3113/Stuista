@@ -202,3 +202,28 @@ exports.addtocart=(req,res,next)=>{
             res.status(400).json({ 'payment unsuccessful': err });
           })
         }
+
+        exports.rating=(req,res,next)=>{
+          const courseid=req.params.courseid;
+          const userid = req.user;
+          let total=0;
+          const rate = req.body.rate;
+          
+          Course.findById(courseid)
+          .then(course=>{
+            course.rating.totalrating.push(rate);
+            course.rating.totalrating.forEach(r=>{
+            total+= r;
+            })
+            course.rating.avgrating = total/(course.rating.totalrating.length);
+            // console.log(course.rating.avgrating);
+            course.save();
+            return res.status(200).json({"rating updated":course});
+          })
+          .catch(err=>{
+            console.log(err);
+            res.status(400).json({ 'error': err });
+
+          })
+
+        }

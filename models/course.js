@@ -35,8 +35,17 @@ const courseSchema = new schema({
     require:true
   },
   rating:{
+    avgrating:{ 
+      type: Number,
+    require: false,
+    },
+    totalrating:[{
     type: Number,
-    require: false
+    require: false,
+    min:1,
+    max:5,
+    }],
+    
   },
   language:{
     type: String,
