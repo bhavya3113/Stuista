@@ -222,8 +222,25 @@ exports.addtocart=(req,res,next)=>{
           })
           .catch(err=>{
             console.log(err);
-            res.status(400).json({ 'error': err });
+            res.status(400).json({ 'error in rating': err });
 
           })
 
+        }
+
+        exports.addreviews=(req,res,next)=>{
+          const courseid=req.params.courseid;
+          const userid = req.user;
+          const userreview = req.body.userreview;
+          Course.findById(courseid)
+          .then(course=>{
+            course.reviews[course.reviews.length] = {userreview:userreview, user:userid};
+            course.save();
+            return res.status(200).json({"review added":course});
+          })
+          .catch(err=>{
+            console.log(err);
+            res.status(400).json({ 'error in adding review': err });
+
+          })
         }

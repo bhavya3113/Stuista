@@ -67,7 +67,19 @@ const courseSchema = new schema({
   videosArray:[{
     type: String,
     require: true
-  }]
+  }],
+  reviews: [{
+    userreview:{
+      type: String,
+      require: false,
+      },
+      user:{ 
+        type: schema.Types.ObjectId,
+        ref:'users',
+        require: false,
+      },
+      createdAt: { type: Date, default: Date.now },
+  }],
 },
 { timestamps: true }
 )
