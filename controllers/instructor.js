@@ -130,7 +130,7 @@ exports.editCourse=(req,res,next)=>{
   .then(course=>{
     if(!course)
     {
-      return res.status(402).json("course not found");
+      return res.status(400).json("course not found");
     }
     if (course.instructorDetails.toString() !== instructorDetails)
     {
@@ -169,7 +169,7 @@ exports.deleteCourse=(req,res,next)=>{
   .then(course=>{
     if(!course)
     {
-      res.status(402).json("course not found");
+      res.status(400).json("course not found");
     }
     if (course.instructorDetails.toString() !== req.userId)
     {

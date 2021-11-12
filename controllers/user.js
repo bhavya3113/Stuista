@@ -36,7 +36,7 @@ const fullname = req.body.fullname;
   .then(user=>{
     if(!user)
     {
-      return res.status(402).json("user not found");
+      return res.status(400).json("user not found");
     }
     user.fullname = fullname;
     user.save();
@@ -58,7 +58,7 @@ exports.deleteProfile=(req,res,next)=>{
   .then(user=>{
     if(!user)
     {
-      return res.status(402).json("user not found");
+      return res.status(400).json("user not found");
     }
     if (userId !== req.userId)
     {

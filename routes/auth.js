@@ -19,6 +19,5 @@ router.post("/resendotp",authController.resendotp);
 router.post("/verifybeforereset",authController.verifybeforereset);
 router.post("/checkotpbeforereset",authController.checkotpbeforereset);
 router.post("/resetpassword",authController.resetPassword);
-// router.post("/login",authController.login);
-router.post("/login",isAuth,authController.login);
+router.post("/login",authController.login);
 module.exports=router;

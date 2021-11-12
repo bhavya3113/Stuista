@@ -3,8 +3,13 @@ const Course = require("../models/course");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
+  .select('-rating.totalrating')
   .populate('instructorDetails','fullname email')
   .then(course=>{
+    if(!course)
+    {
+      res.status(400).json("no course found");
+    }
     res.status(200).json(course);
   })
   .catch(error=>{
@@ -15,8 +20,13 @@ exports.allCourses=(req,res,next)=>{
 exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
   Course.find({category:categorywiseCourses})
+  .select('-rating.totalrating')
   .populate('instructorDetails','fullname email')
   .then(course=>{
+    if(!course)
+    {
+      res.status(400).json("no course found");
+    }
     // console.log(categorywiseCourses);
     res.status(200).json(course);
   })
@@ -218,7 +228,7 @@ exports.addtocart=(req,res,next)=>{
             course.rating.avgrating = total/(course.rating.totalrating.length);
             // console.log(course.rating.avgrating);
             course.save();
-            return res.status(200).json({"rating updated":course});
+            return res.status(200).json("rating updated");
           })
           .catch(err=>{
             console.log(err);
@@ -236,11 +246,49 @@ exports.addtocart=(req,res,next)=>{
           .then(course=>{
             course.reviews[course.reviews.length] = {userreview:userreview, user:userid};
             course.save();
-            return res.status(200).json({"review added":course});
+            return res.status(200).json("review added");
           })
           .catch(err=>{
             console.log(err);
             res.status(400).json({ 'error in adding review': err });
 
           })
+        }
+
+        exports.filter=(req,res,next)=>{
+         
+        const query = req.query;
+          
+        const conditions = {};
+        if (query.category) {
+           conditions.category = query.category;
+        }
+        if (query.duration) {
+          conditions.duration = query.duration;
+        }
+        if (query.price) {
+          conditions.price = {$lte:query.price};
+        }
+        if (query.rating) {
+          conditions.rating = {'avgrating' :query.rating};
+        }
+        if (query.language) {
+          conditions.language = query.language;
+        }
+        console.log(conditions);
+      Course.find(conditions)
+      .select('-rating.totalrating')
+        .populate('instructorDetails','fullname email')
+        .then(course=>{
+          if(!course)
+          {
+            console.log("no course found");
+            res.status(400).json("no course found");
+          }
+          res.status(200).json(course);
+        })
+        .catch(error=>{
+          console.log(error);
+          res.status(500).json("error in fetching courses");
+        })
         }
