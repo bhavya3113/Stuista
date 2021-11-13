@@ -183,7 +183,11 @@ exports.deleteCourse=(req,res,next)=>{
   .then(user=>{
       user.course.pull(courseId);
       user.save();
-      res.status(200).json('course deleted');
+      // res.status(200).json('course deleted');
+    })
+    .then(result=>{
+      // User.updateMany({ 'cart': courseId },{$pull:{ 'cart':courseId}});
+       res.status(200).json('course deleted');
     })
   .catch(err=>{
      res.status(400).json({ 'Error in deleting course': err });

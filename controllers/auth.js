@@ -102,16 +102,21 @@ exports.otpVerification =(req,res,next)=>{
     {
         return res.status(422).json({ Error: "Wrong Otp" });
     }
-    User.findOne({email:email})
+    return User.findOne({email:email})
+    })
     .then(user=>{
       user.isVerified = "true";
       user.save();
+      const accesstoken = jwt.sign(
+        {
+          email: user.email,
+          userId: user._id.toString()
+        },
+        process.env.ACCESS_TOKEN_KEY,
+        { expiresIn: '24h' }
+      );
+      res.status(200).json({"accesstoken":accesstoken,"user": user._id.toString()})
     })
-      res.status(200).json({
-      status: "success",
-      data: user
-  })
-  })
   .catch(err => {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -141,12 +146,16 @@ exports.resendotp =(req,res,next)=>{
 }
 exports.verifybeforereset = (req,res,next)=>{
   const email = req.body.email;
-  const fullname = req.body.fullname;
+  // const fullname = req.body.fullname; 
   User.findOne({ email: email })
   .then(user=>{
     if(!user)
     {
-     return res.send("not registered");
+     return res.status(400).json({Error:"not registered"});
+    }
+    if(user.isVerified == "false")
+    {
+     return res.status(400).json({Error:"Registered but not verified.Verify First"});
     }
     let otp = otpGenerator.generate(6, {
       alphabets: false,
@@ -162,7 +171,7 @@ exports.verifybeforereset = (req,res,next)=>{
       message: "otp sent",
       email: email,
     });
-    return mail.sendEmail(email,otp,fullname);
+    return mail.sendEmail(email,otp,user.fullname);
   })
   .catch((err) => {
     if (!err.statusCode) {
@@ -205,9 +214,10 @@ exports.resetPassword=(req,res,next)=>{
    
       if(newPwd != confirmPwd)
       {
-        const error = new Error("Passwords do not match");
-        error.statusCode = 422;
-        throw error;
+        return res.status(422).json({Error:"Passwords do not match"});
+        // const error = new Error("Passwords do not match");
+        // error.statusCode = 422;
+        // throw error;
       }
       bcrypt.hash(newPwd, 12)
       .then(hashedPassword => {
@@ -215,14 +225,10 @@ exports.resetPassword=(req,res,next)=>{
           .then((user) => {
             user.password = hashedPassword;
             user.save();
-            res.json({ messsage: "new password saved",user });
+            res.status(200).json("new password saved");
           })
           .catch((err) => {
-            res.json({message: "password not saved"});
-            if (!err.statusCode) {
-              err.statusCode = 500;
-              console.log(err);
-            }
+            res.status(400).json({Error: "password not saved"});
           });
         })
        .catch(err => {
@@ -249,13 +255,14 @@ exports.login=(req,res,next)=>{
   User.findOne({ email: email })
     .then(user => {
       if (!user) {
-        const error = new Error('User is not registered.');
-        error.statusCode = 401;
-        throw error;
+        // const error = new Error('User is not registered.');
+        // error.statusCode = 401;
+        // throw error;
+        return res.status(401).json({Error:"User is not registered"});
       }
       if (user.isVerified=="false") {
         res.status(200).json({
-            message: "user not verified. kindly check your mail for otp and verify your account"
+            Error: "user not verified. kindly check your mail for otp and verify your account"
           })
 
         let otp = otpGenerator.generate(6, {
@@ -269,10 +276,10 @@ exports.login=(req,res,next)=>{
         });
          onetimepwd.save();
         
-        const sendingotp = mail.sendEmail(email,otp,user.fullname);
-        const error = new Error('User not verified.Email has been sent for verification');
-        error.statusCode = 401;
-        throw error;
+        return mail.sendEmail(email,otp,user.fullname);
+        // const error = new Error('User not verified.Email has been sent for verification');
+        // error.statusCode = 401;
+        // throw error;
 
       }
       if(user.isVerified == "true"){
@@ -281,9 +288,10 @@ exports.login=(req,res,next)=>{
     })
     .then(isEqual => {
       if (!isEqual) {
-        const error = new Error('Incorrect password!');
-        error.statusCode = 401;
-        throw error;
+        // const error = new Error('Incorrect password!');
+        // error.statusCode = 401;
+        // throw error;
+        return res.status(401).json({Error:"Incorrect Password!"});
       }
 
       const accesstoken = jwt.sign(

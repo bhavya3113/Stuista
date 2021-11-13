@@ -40,7 +40,17 @@ exports.addtocart=(req,res,next)=>{
   const courseId = req.params.courseid;
 
   // console.log(userId , courseId);
-  User.findById(userId)
+  Course.find(courseId)
+  .then(course=>{
+    if(!course)
+    {
+      return res.status(400).json('Course does not exist'); 
+    }
+    else
+    {
+      return User.findById(userId)
+    }
+  })
   .then(user=>{
     const index = user.cart.findIndex(courseid => courseId==courseid)
     if(index==-1)
