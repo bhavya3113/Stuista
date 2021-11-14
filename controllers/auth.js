@@ -302,7 +302,7 @@ exports.login=(req,res,next)=>{
         process.env.ACCESS_TOKEN_KEY,
         { expiresIn: '24h' }
       );
-      res.status(200).json({accesstoken,userId: registeredUser._id.toString() });
+      res.status(200).json({accesstoken,userId: registeredUser._id.toString(),instructor: registeredUser.verifiedasInstructor });
     })
     .catch(err => {
       if (!err.statusCode) {

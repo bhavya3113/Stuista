@@ -1,8 +1,10 @@
 const User = require("../models/users");
 const Course = require("../models/course");
+const Instructor = require("../models/instructor");
 
 const { validationResult } = require('express-validator');
-
+const fs = require("fs");
+const path = require("path");
 
 exports.instructorProfile=(req,res,next)=>{
   const userId = req.userId;
@@ -11,13 +13,24 @@ exports.instructorProfile=(req,res,next)=>{
   
   User.findById(userId)
   .then(user=>{
-    user.experience = experience,
-    user.areaofexpertise = areaofexpertise
-
-    user.save();
-  })
-  .then(result=>{
-    res.status(200).json("instructor profile created");
+    if(!user)
+    {
+      return res.status(401).json({Error:"Not registered"});
+    }
+    if(user.verifiedasInstructor == "true")
+    {
+      return res.status(400).json({Error:"Already registered as instructor"}); 
+    }
+      const instructor = new Instructor({
+        details:userId,
+        experience : experience,
+        areaofexpertise : areaofexpertise,
+        verifiedasInstructor:"true"
+      });
+       instructor.save();
+       user.verifiedasInstructor = "true";
+       user.save();
+       return res.status(200).json({message:"instructor profile created"});
   })
   .catch(err=>{
     if (!err.statusCode) {
@@ -36,70 +49,65 @@ exports.addCourse=(req,res,next)=>{
     error.statusCode = 422;
     throw error;
   }
+  
   const title = req.body.title;
   const category = req.body.category;
   const duration = req.body.duration;
   const preRequisites = req.body.preRequisites;
   const introduction = req.body.introduction;
   const description = req.body.description;
-  const instructorName = req.body.instructorName;
   const price = req.body.price;
   const language = req.body.language;
   const skillsLearned = req.body.skillsLearned;
-  const instructorDetails = req.userId;
   const image = req.files.image[0];
   const imageUrl = image.path;
-  // console.log(req.files);
-  // console.log(instructorDetails);
-
-  const course =new Course({
-   title: title,
-   category: category,
-   duration: duration,
-   preRequisites: preRequisites,
-   introduction: introduction,
-   description: description,
-   instructorName: instructorName,
-   price: price,
-   language: language,
-   skillsLearned: skillsLearned,
-   instructorDetails: instructorDetails,
-   imageUrl: imageUrl
-  });
-  course.save()
-  .then(course=>{
-    //res.status(200)//.json({message:'course created', course });
-    return User.findById(instructorDetails)
-  })
-  .then(user=>{
-      user.course.push(course);
-      user.save();
-      res.status(201).json({message:'course created and added to teachers dashboard', course});
-    })
-  .catch(err=>{
-    console.log("error in adding course to teacher's dashboard", err);
-     res.status(400).json({ 'Error in adding course to teachers dashboard': err });
-  })
-  .catch(err=>{
-    res.status(400).json({'Error in adding Course': err})
-  })
-}
-
-exports.addVideo=(req,res,next)=>{
   const videos = req.files.video;
-  const courseid = req.params.courseid;
-  Course.findById(courseid)
-  .then(course=>{
-    videos.forEach(video=>{
-      course.videosArray.push(video.path);
-    })
-    course.save();
+  const videosUrl =[];
+  // console.log(req.files);
+  videos.forEach(video=>{
+    videosUrl.push(video.path);
   })
-  .then(result=>{
-    res.status(200).json("successfully saved the video")
+
+  Instructor.findOne({'details':req.userId})
+  .populate('details')
+  .then(instructor=>{
+    if(!instructor)
+    {
+      return res.status(401).json({Error:"Not registered as an instructor"});
+    }
+
+    const course =new Course({
+      title: title,
+      category: category,
+      duration: duration,
+      preRequisites: preRequisites,
+      introduction: introduction,
+      description: description,
+      instructorName: instructor.details.fullname,
+      instructorEmail: instructor.details.email,
+      instructorExperience: instructor.experience,
+      instructorId: instructor._id,
+      price: price,
+      language: language,
+      skillsLearned: skillsLearned,
+      imageUrl: imageUrl,
+      videosArray: videosUrl
+    });
+
+      course.save();
+      instructor.course.push(course);
+      instructor.save();
+      res.status(201).json({message:'course created and added to instructor dashboard',course:course});
   })
   .catch(err=>{
-    res.status(400).json({'Error in saving video': err})
+    // console.log("error in adding course to teacher's dashboard", err);
+     res.status(400).json({Error: 'Error in adding course to instructor dashboard'});
+  })
+  .catch(err=>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
+    }
   })
 }
 
@@ -112,47 +120,63 @@ exports.editCourse=(req,res,next)=>{
     error.statusCode = 422;
     throw error;
   }
+
   const title = req.body.title;
   const category = req.body.category;
   const duration = req.body.duration;
   const preRequisites = req.body.preRequisites;
   const introduction = req.body.introduction;
   const description = req.body.description;
-  const instructorName = req.body.instructorName;
   const price = req.body.price;
   const language = req.body.language;
   const skillsLearned = req.body.skillsLearned;
-  const instructorDetails = req.userId;
   const image = req.files.image[0];
   const imageUrl = image.path;
 
-  Course.findById(courseId)
+  Instructor.findOne({'details':req.userId})
+  .populate('details')
+  .then(instructor=>{
+    
+    if(!instructor)
+    {
+      return res.status(401).json({Error:"Not registered as an instructor"});
+    }
+
+    const index = instructor.course.findIndex(courseid => courseId==courseid)
+    if(index==-1)
+    {
+      return res.status(403).json({Error:"Since, you have not created this course,you are not allowed to make changes in it"});
+    }
+    return Course.findById(courseId);
+  })
   .then(course=>{
     if(!course)
     {
-      return res.status(400).json("course not found");
+      return res.status(400).json({Error:"course not found"});
     }
-    if (course.instructorDetails.toString() !== instructorDetails)
+
+    if(course.imageUrl && course.imageUrl !== imageUrl)
     {
-      return res.status(403).json("Not Authorized");
+      // console.log(path.resolve('./')+'\\'+course.imageUrl);
+      fs.unlink(path.resolve('./')+'\\'+course.imageUrl, (err) => {
+      if (err) throw err;
+      // console.log('successfully deleted file');
+      });
     }
-    course.title= title,
-    course.category= category,
-    course.duration= duration,
-    course.preRequisites= preRequisites,
-    course.introduction= introduction,
-    course.description= description,
-    course.instructorName= instructorName,
-    course.price= price,
-    course.language= language,
-    course.skillsLearned= skillsLearned,
-    course.instructorDetails= instructorDetails,
-    course.imageUrl= imageUrl
-    
+
+    course.title = title;
+    course.category = category;
+    course.duration = duration;
+    course.preRequisites = preRequisites;
+    course.introduction = introduction;
+    course.description = description;
+    course.price = price;
+    course.language = language;
+    course.skillsLearned = skillsLearned;
+    course.imageUrl = imageUrl;
     course.save();
-  })
-  .then(result=>{
-    res.status(201).json("course editted successfully");
+
+    res.status(201).json({message:"course editted successfully"});
   })
   .catch(err=>{
     if (!err.statusCode) {
@@ -165,31 +189,68 @@ exports.editCourse=(req,res,next)=>{
 
 exports.deleteCourse=(req,res,next)=>{
   const courseId = req.params.courseid;
+  let imgpath;
+  let videopath =[];
+  let length;
   Course.findById(courseId)
   .then(course=>{
     if(!course)
     {
-      res.status(400).json("course not found");
+       return res.status(400).json({Error:"course not found"});
     }
-    if (course.instructorDetails.toString() !== req.userId)
+    imgpath = course.imageUrl;
+    length = course.videosArray.length;
+    for(var i=0;i<length;i++)
     {
-      res.status(403).json("Not Authorized");
+      videopath.push(course.videosArray[i]);
     }
-    return Course.findByIdAndRemove(courseId)
+    // console.log(videopath);
+    return Instructor.findOne({'details':req.userId})
+  })
+  .then(instructor=>{
+    
+    if(!instructor)
+    {
+      return res.status(401).json({Error:"Not registered as an instructor"});
+    }
+    if(instructor.course)
+    {
+      const index = instructor.course.findIndex(courseid => courseId==courseid)
+    if(index==-1)
+    {
+        return res.status(403).json({Error:"Since, you have not created this course,you are not allowed to delete it"});
+    }
+    instructor.course.pull(courseId);
+    instructor.save();
+
+    fs.unlink(path.resolve('./')+'\\'+imgpath, (err) => {
+      if (err) throw err;
+      // console.log(imgpath,'successfully deleted file');
+    });
+
+    for(var i=0;i<length;i++)
+    {
+      // console.log(path.resolve('./')+'\\'+videopath[i]);
+      fs.unlink(path.resolve('./')+'\\'+videopath[i], (err) => {
+        if (err) throw err;
+        // console.log('successfully deleted file');
+      });
+    }
+
+    return Course.findByIdAndRemove(courseId);}
   })
   .then(result=>{
-    return User.findById(req.userId)
+    return res.status(200).json({message:'course deleted'});
   })
-  .then(user=>{
-      user.course.pull(courseId);
-      user.save();
-      // res.status(200).json('course deleted');
-    })
-    .then(result=>{
-      // User.updateMany({ 'cart': courseId },{$pull:{ 'cart':courseId}});
-       res.status(200).json('course deleted');
-    })
+    //   .then(result=>{
+  //     // User.updateMany({ 'cart': courseId },{$pull:{ 'cart':courseId}});
+  //      res.status(200).json('course deleted');
+  //   })
   .catch(err=>{
-     res.status(400).json({ 'Error in deleting course': err });
+    if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
+    }
   })
 }
+

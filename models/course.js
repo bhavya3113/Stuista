@@ -22,6 +22,18 @@ const courseSchema = new schema({
     type: String,
     require:true 
   },
+  instructorEmail:{
+    type: String,
+    require:true 
+  },
+  instructorExperience:{
+    type: String,
+    require:true 
+  },
+  instructorId:{
+    type: schema.Types.ObjectId,
+    require:true 
+  },
   introduction:{
     type: String,
     require: true
@@ -35,6 +47,10 @@ const courseSchema = new schema({
     require:true
   },
   rating:{
+    user:{ 
+      type: schema.Types.ObjectId,
+      ref:'users'
+    },
     avgrating:{ 
       type: Number,
     require: false,
@@ -58,11 +74,6 @@ const courseSchema = new schema({
   imageUrl:{
     type: String,
     require:true
-  },
-  instructorDetails:{
-    type: schema.Types.ObjectId,
-    require:true,
-    ref:'users',
   },
   videosArray:[{
     type: String,

@@ -18,14 +18,17 @@ const userSchema = new schema({
     type: String,
     require: true
   },
+  verifiedasInstructor:{
+    type: String,
+    require: true,
+    default:"false"
+  },
   mycourses:[{
     type:schema.Types.ObjectId,
     ref:"course"
   }],
-  course:[{
-    type:schema.Types.ObjectId,
-    ref:"course"
-  }],
+ 
+  
   cart:[{
     type:schema.Types.ObjectId,
     ref:"course"
@@ -34,14 +37,7 @@ const userSchema = new schema({
     type:schema.Types.ObjectId,
     ref:"course"
   }],
-  experience:{
-    type: String,
-    require:true
-  },
-  areaofexpertise:{
-    type: String,
-    require:true
-  }
+
 })
 
 module.exports = mongoose.model("users",userSchema);

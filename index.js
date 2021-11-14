@@ -47,7 +47,7 @@ const fileFilter=(req,file,cb)=>{
 app.use(multer({storage:fileStorage,fileFilter:fileFilter})//.array('video', 10));
 // .single('image'));
 .fields([
-  { name: 'image'},
+  { name: 'image', maxCount: 1 },
   { name: 'video'}
 ]));
 app.use(express.json());
@@ -65,7 +65,7 @@ app.use((req, res, next) => {
 
 app.use('/auth',authRoutes);
 app.use('/courses',courseRoutes);
-app.use(instructorRoutes);
+app.use('/instructor',instructorRoutes);
 app.use(userRoutes);
 
 
