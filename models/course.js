@@ -47,22 +47,23 @@ const courseSchema = new schema({
     require:true
   },
   rating:{
+    eachrating:[{
     user:{ 
       type: schema.Types.ObjectId,
       ref:'users'
     },
-    avgrating:{ 
-      type: Number,
-    require: false,
-    },
-    totalrating:[{
+    rate:{
     type: Number,
     require: false,
     min:1,
     max:5,
-    }],
-    
-  },
+    },
+  }],
+  avgrating:{ 
+    type: Number,
+  require: false,
+  }
+},
   language:{
     type: String,
     require: true
