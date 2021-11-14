@@ -34,6 +34,25 @@ exports.categorywise=(req,res,next)=>{
   })
 }
 
+
+exports.viewCourse=(req,res,next)=>{
+  const courseId = req.params.courseid;
+  Course.findById(courseId)
+  .select('-rating.totalrating -_id -instructorId -videosArray')
+  .then(course=>{
+    if(!course)
+    {
+      res.status(400).json("no course found");
+    }
+    res.status(200).json(course);
+  })
+  .catch(error=>{
+    // console.log(error);
+    res.status(500).json({Error:"error in fetching allcourses"});
+  })
+}
+
+
 exports.addtocart=(req,res,next)=>{
   const userId = req.userId;
   const courseId = req.params.courseid;

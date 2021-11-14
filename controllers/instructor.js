@@ -293,8 +293,8 @@ exports.deleteinstructorprofile = (req,res,next)=>{
 exports.viewinstructorprofile = (req,res,next)=>{
   const userId = req.params.userid;
   Instructor.findOne({'details': userId})
-  .select('-_id -course')
-  .populate('details',{'fullname':1,'email':1,'_id':0})
+  .select('-_id')
+  .populate('details course',{'fullname':1,'email':1,'_id':0,'imageUrl':1,'title':1,'duration':1,'price':1})
     .then(instructor => {
       if (!instructor) {
         return res.status(400).json({Error:"instructor not found"});

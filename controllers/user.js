@@ -8,7 +8,7 @@ exports.viewUserProfile=(req,res,next)=>{
   const userId = req.params.userid;
   User.findById(userId, 'fullname email')
   .select('-_id')
-  .populate('mycourses favourites')
+  .populate('mycourses favourites',{'_id':0,'imageUrl':1,'title':1,'duration':1,'price':1})
     .then(user => {
       if (!user) {
         return res.status(400).json({Error:"user not found"});

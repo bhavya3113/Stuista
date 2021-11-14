@@ -8,6 +8,7 @@ const isAuth = require("../middleware/isAuth");
 
 router.get("/allCourses",courseController.allCourses);
 router.get("/show",courseController.filter);
+router.get("/viewcourse/:courseid",courseController.viewCourse)
 router.get("/:category",courseController.categorywise);
 router.post("/buynow/:courseid",isAuth,courseController.buynow);
 router.post("/buyfromcart/:userid",isAuth,courseController.buyfromcart);
