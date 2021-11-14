@@ -3,8 +3,7 @@ const Course = require("../models/course");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
-  .select('-rating.totalrating')
-  .populate('instructorDetails','fullname email')
+  .select('-rating.totalrating -_id -instructorId')
   .then(course=>{
     if(!course)
     {
@@ -13,15 +12,15 @@ exports.allCourses=(req,res,next)=>{
     res.status(200).json(course);
   })
   .catch(error=>{
-    res.status(500).json("error in fetching allcourses", error);
+    // console.log(error);
+    res.status(500).json({Error:"error in fetching allcourses"});
   })
 }
 
 exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
   Course.find({category:categorywiseCourses})
-  .select('-rating.totalrating')
-  .populate('instructorDetails','fullname email')
+  .select('-rating.totalrating -_id -instructorId')
   .then(course=>{
     if(!course)
     {
@@ -31,7 +30,7 @@ exports.categorywise=(req,res,next)=>{
     res.status(200).json(course);
   })
   .catch(error=>{
-    res.status(500).json("error in fetching category-wise courses", error);
+    res.status(500).json({Error:"error in fetching category-wise courses"});
   })
 }
 

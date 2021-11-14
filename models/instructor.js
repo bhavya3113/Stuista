@@ -8,11 +8,6 @@ const instructorSchema = new schema({
     require:true,
     ref:'users',
   },
-  verifiedasInstructor:{
-    type: String,
-    require: true,
-    default:"false"
-  },
   course:[{
     type:schema.Types.ObjectId,
     ref:"course"

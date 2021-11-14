@@ -6,7 +6,7 @@ const { validationResult } = require('express-validator');
 const fs = require("fs");
 const path = require("path");
 
-exports.instructorProfile=(req,res,next)=>{
+exports.createinstructorProfile=(req,res,next)=>{
   const userId = req.userId;
   const experience = req.body.experience;
   const areaofexpertise = req.body.areaofexpertise;
@@ -25,7 +25,6 @@ exports.instructorProfile=(req,res,next)=>{
         details:userId,
         experience : experience,
         areaofexpertise : areaofexpertise,
-        verifiedasInstructor:"true"
       });
        instructor.save();
        user.verifiedasInstructor = "true";
@@ -254,3 +253,85 @@ exports.deleteCourse=(req,res,next)=>{
   })
 }
 
+exports.deleteinstructorprofile = (req,res,next)=>{
+  const userId = req.params.userid;
+
+  User.findById(userId)
+  .then(user=>{
+    if(!user)
+      return res.status(400).json({Error:"user not found"});
+      
+    if(user.verifiedasInstructor == "false")
+    return res.status(400).json({Error:"User is not an instructor"});
+    if (userId !== req.userId)
+     return res.status(403).json({Error:"Not Authorized"});
+     user.verifiedasInstructor ="false";
+     user.save();
+     return Instructor.findOne({"details": userId});
+  })
+  .then(instructor=>{
+    const length = instructor.course.length;
+    for(var i=0;i<length;i++)
+    {
+      Course.findByIdAndRemove(instructor.course[i],(err)=>{
+        if(err)
+        throw err;
+      });
+    }
+    return Instructor.findOneAndRemove({"details": userId});
+  })
+  .then(result=>{
+    return res.status(200).json({message:"Instructor profile deleted"});
+  })
+  .catch(err=>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+  })
+}
+
+exports.viewinstructorprofile = (req,res,next)=>{
+  const userId = req.params.userid;
+  Instructor.findOne({'details': userId})
+  .select('-_id -course')
+  .populate('details',{'fullname':1,'email':1,'_id':0})
+    .then(instructor => {
+      if (!instructor) {
+        return res.status(400).json({Error:"instructor not found"});
+      }
+      res.status(200).json(instructor);
+    })
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+    });
+}
+
+exports.editinstructorprofile = (req,res,next)=>{
+  const userId = req.params.userid;
+  
+  const experience = req.body.experience;
+  const areaofexpertise = req.body.areaofexpertise;
+
+  Instructor.findOne({'details':userId})
+  .then(instructor=>{
+  if(!instructor)
+  {
+    return res.status(400).json({message:"instructor not found"});
+  }
+
+  instructor.experience = experience;
+  instructor.areaofexpertise = areaofexpertise;
+  instructor.save();
+})
+.then(result=>{
+  res.status(201).json({message:"instructor profile  editted successfully"});
+})
+.catch(err=>{
+  if (!err.statusCode) {
+    err.statusCode = 500;
+    console.log(err);
+  }
+})
+}

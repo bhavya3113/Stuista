@@ -66,7 +66,7 @@ app.use((req, res, next) => {
 app.use('/auth',authRoutes);
 app.use('/courses',courseRoutes);
 app.use('/instructor',instructorRoutes);
-app.use(userRoutes);
+app.use('/user',userRoutes);
 
 
 app.use((error, req, res, next) => {

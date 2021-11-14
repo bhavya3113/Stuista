@@ -1,15 +1,17 @@
 const User = require("../models/users");
 const Course = require("../models/course");
-
+const Instructor = require("../models/instructor");
 const { validationResult } = require('express-validator');
 
 
-exports.viewProfile=(req,res,next)=>{
+exports.viewUserProfile=(req,res,next)=>{
   const userId = req.params.userid;
-  User.findById(userId, 'fullname email ')
+  User.findById(userId, 'fullname email')
+  .select('-_id')
+  .populate('mycourses favourites')
     .then(user => {
       if (!user) {
-        return res.status(400).json("user not found");
+        return res.status(400).json({Error:"user not found"});
       }
       res.status(200).json(user);
     })
@@ -20,7 +22,7 @@ exports.viewProfile=(req,res,next)=>{
     });
 }
 
-exports.editProfile=(req,res,next)=>{
+exports.editUserProfile=(req,res,next)=>{
   const userId = req.params.userid;
   
   const errors = validationResult(req);
@@ -36,13 +38,13 @@ const fullname = req.body.fullname;
   .then(user=>{
     if(!user)
     {
-      return res.status(400).json("user not found");
+      return res.status(400).json({message:"user not found"});
     }
     user.fullname = fullname;
     user.save();
   })
   .then(result=>{
-    res.status(201).json("user profile  editted successfully");
+    res.status(201).json({message:"user profile  editted successfully"});
   })
   .catch(err=>{
     if (!err.statusCode) {
@@ -54,26 +56,36 @@ const fullname = req.body.fullname;
 
 exports.deleteProfile=(req,res,next)=>{
   const userId = req.params.userid;
+
   User.findById(userId)
   .then(user=>{
     if(!user)
-    {
-      return res.status(400).json("user not found");
-    }
+      return res.status(400).json({Error:"user not found"});
     if (userId !== req.userId)
+     return res.status(403).json({Error:"Not Authorized"});
+    return User.findByIdAndRemove(userId);
+  })
+  .then(result=>{
+    return Instructor.findOne({"details": userId});
+  })
+  .then(instructor=>{
+    const length = instructor.course.length;
+    for(var i=0;i<length;i++)
     {
-     return res.status(403).json("Not Authorized");
+      Course.findByIdAndRemove(instructor.course[i],(err)=>{
+        if(err)
+        throw err;
+      });
     }
-    return User.findByIdAndRemove(userId)
+    return Instructor.findOneAndRemove({"details": userId});
   })
   .then(result=>{
-    return Course.deleteMany({"instructorDetails": userId})
+    return res.status(200).json({message:'user deleted'})
   })
-  .then(result=>{
-        res.status(200).json('user deleted')
-    })
   .catch(err=>{
     console.log(err);
-     res.status(400).json({ 'Error in deleting user': err });
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
   })
 }
