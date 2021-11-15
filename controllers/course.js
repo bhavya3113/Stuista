@@ -462,3 +462,20 @@ exports.addtocart=(req,res,next)=>{
      })
      
         }
+
+        exports.search=(req,res,next)=>{
+          const text = req.body.text;
+          Course.find({ title: { $regex: text, $options: "xi"} })
+          .select('-rating.eachrating -_id -instructorId -reviews._id')
+          .then(course=>{
+            if(!course)
+            {
+              res.status(400).json({Error:"no course found"});
+            }
+            res.status(200).json({course:course});
+          })
+          .catch(error=>{
+            console.log(error);
+            res.status(500).json({Error:"error in fetching allcourses"});
+          })
+        }

@@ -1,6 +1,7 @@
 const User = require("../models/users");
 const Course = require("../models/course");
 const Instructor = require("../models/instructor");
+const mail = require("../utils/bulkmail");
 
 const { validationResult } = require('express-validator');
 const fs = require("fs");
@@ -96,7 +97,34 @@ exports.addCourse=(req,res,next)=>{
       course.save();
       instructor.course.push(course);
       instructor.save();
-      res.status(201).json({message:'course created and added to instructor dashboard',course:course});
+       User.find(function (err,userx){
+        if (err){
+            throw err;
+        }
+        else{
+            var user_arr =Object.keys(userx).map(
+                function(key){
+                    return userx[key];
+                }
+            );
+            user_arr.forEach(user=>{
+                  for(var i=0;i<user.mycourses.length;i++)
+                  {
+                    if(user.mycourses[i].category == category)
+                    {
+                      const sendmail = mail.bulkmail(user.email,user.fullname);
+                      break;
+                    }
+                  }
+            })
+    
+        }
+    }) 
+    .clone()
+    .populate('mycourses')
+  })
+  .then(result=>{
+   res.status(200).json({message:'course created and added to instructor dashboard'});
   })
   .catch(err=>{
     // console.log("error in adding course to teacher's dashboard", err);
