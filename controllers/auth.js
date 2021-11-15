@@ -15,7 +15,7 @@ var emailregex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{
 exports.signup = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const error = new Error("Validation Failed ");
+    const error = new Error("Validation Failed");
     error.statusCode = 422;
     error.data = errors.array();
     throw error;
@@ -26,12 +26,12 @@ const email = req.body.email;
 const password = req.body.password;
 
 if (!(email && password && fullname)) {
-  res.status(400).send("All fields are required");
+  res.status(400).send({Error:"All fields are required"});
 }
 var validemail = emailregex.test(email);
 
 if (!validemail) {
-   res.status(422).json({ error: "please enter a valid email" });
+   res.status(422).json({ Error: "please enter a valid email" });
 }
 User.findOne({email:email})
 .then(user=>{
@@ -40,8 +40,23 @@ User.findOne({email:email})
     // const error = new Error("User already exists !!");
     // error.statusCode = 400;
     // throw error;
-    
+    if(user.isVerified == "true")
     res.status(422).json({ Error: "User is already registered" })
+    else
+    {
+      let otp = otpGenerator.generate(6, {
+        alphabets: false,
+        specialChars: false,
+        upperCase: false,
+      });
+      const onetimepwd = new Otp({
+        email:email,
+        otp:otp
+      });
+       onetimepwd.save();
+      const e = mail.sendEmail(email,otp,fullname);
+      res.status(201).json({message:'Otp sent.Verify first.', email:email,fullname:fullname});
+    }
   }
   else{
 
@@ -57,7 +72,7 @@ User.findOne({email:email})
     })
     .then(results=>{
       
-      res.status(201).json({message:'user created', email:email,fullname:fullname});
+      res.status(201).json({message:'Otp has been sent for verification.Verify and continue.', email:email,fullname:fullname});
       let otp = otpGenerator.generate(6, {
         alphabets: false,
         specialChars: false,
@@ -75,7 +90,7 @@ User.findOne({email:email})
       return mail.sendEmail(email,otp,fullname); 
     })
     .catch(err => {
-      res.status(401).json({"Error in registering user" : err })
+      res.status(401).json({Error:"Error in registering user"})
     
     })
   }
@@ -127,7 +142,8 @@ exports.otpVerification =(req,res,next)=>{
 
 exports.resendotp =(req,res,next)=>{
   const email = req.body.email;
-  const fullname = req.body.fullname;
+  const index = email.indexOf("@");
+  const fullname = email.substring(0,index);;
   let otp = otpGenerator.generate(6, {
     alphabets: false,
     specialChars: false,
@@ -209,9 +225,10 @@ exports.checkotpbeforereset=(req,res,next)=>{
 }
 exports.resetPassword=(req,res,next)=>{
   const email = req.body.email;
-  const newPwd = req.body.newPwd;
-  const confirmPwd = req.body.confirmPwd;
+  const newPwd = req.body.password;
+  const confirmPwd = req.body.cpassword;
    
+  // console.log(email,newPwd,confirmPwd);
       if(newPwd != confirmPwd)
       {
         return res.status(422).json({Error:"Passwords do not match"});
@@ -223,16 +240,18 @@ exports.resetPassword=(req,res,next)=>{
       .then(hashedPassword => {
       User.findOne({ email: email })
           .then((user) => {
+  // console.log(email,newPwd,confirmPwd);
             user.password = hashedPassword;
             user.save();
-            res.status(200).json("new password saved");
+            res.status(200).json({message:"new password saved"});
           })
           .catch((err) => {
             res.status(400).json({Error: "password not saved"});
           });
         })
        .catch(err => {
-    if (!err.statusCode) {
+    if (!err.statusCode) 
+    {
       err.statusCode = 500;
       console.log(err);
     }
@@ -251,6 +270,16 @@ exports.login=(req,res,next)=>{
   
   const email = req.body.email;
   const password = req.body.password;
+
+  if (!(email && password)) {
+    res.status(400).send({Error:"All fields are required"});
+  }
+  var validemail = emailregex.test(email);
+  
+  if (!validemail) {
+     res.status(422).json({ Error: "please enter a valid email" });
+  }
+
   let registeredUser;
   User.findOne({ email: email })
     .then(user => {

@@ -4,7 +4,7 @@ const Instructor = require("../models/instructor");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
-  .select('-rating.totalrating -_id -instructorId')
+  .select('-rating.eachrating -_id -instructorId -reviews._id')
   .then(course=>{
     if(!course)
     {
@@ -21,7 +21,7 @@ exports.allCourses=(req,res,next)=>{
 exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
   Course.find({category:categorywiseCourses})
-  .select('-rating.totalrating -_id -instructorId')
+  .select('-rating.eachrating -_id -instructorId -reviews._id')
   .then(course=>{
     if(!course)
     {
@@ -39,7 +39,7 @@ exports.categorywise=(req,res,next)=>{
 exports.viewCourse=(req,res,next)=>{
   const courseId = req.params.courseid;
   Course.findById(courseId)
-  .select('-rating.eachrating -_id -instructorId -videosArray -reviews._id')
+  .select('-rating.eachrating -_id -instructorId -reviews._id')
   .populate('reviews.user',{fullname:1,_id:0})
   .then(course=>{
     if(!course)
@@ -349,7 +349,7 @@ exports.addtocart=(req,res,next)=>{
                   total+=r.rate;
                 })
                 // console.log(total);
-                course.rating.avgrating = total/(course.rating.eachrating.length);
+                course.avgrating = total/(course.rating.eachrating.length);
                   // console.log(course.rating.avgrating);
                 course.save();
             }
@@ -361,11 +361,11 @@ exports.addtocart=(req,res,next)=>{
                 total+=r.rate;
                 })
               // console.log(total);
-              course.rating.avgrating = total/(course.rating.eachrating.length);
+              course.avgrating = total/(course.rating.eachrating.length);
                 // console.log(course.rating.avgrating);
               course.save();
             }
-              return res.status(200).json({message:"rating added",rating:course.rating.avgrating}); 
+              return res.status(200).json({message:"rating added",rating:course.avgrating}); 
             }
             })
           .catch(err=>{
@@ -438,25 +438,27 @@ exports.addtocart=(req,res,next)=>{
           conditions.price = {$lte:query.price};
         }
         if (query.rating) {
-          conditions.rating = {'avgrating' :query.rating};
+          
+          conditions.avgrating = {$gte:query.rating};
+          // conditions.rating = {query.rating};
+          // conditions.rating.avgrating={}
         }
         if (query.language) {
           conditions.language = query.language;
         }
-        console.log(conditions);
+        // console.log(conditions);
       Course.find(conditions)
-      .select('-rating.totalrating')
-        .populate('instructorDetails','fullname email')
-        .then(course=>{
-          if(!course)
-          {
-            console.log("no course found");
-            res.status(400).json("no course found");
-          }
-          res.status(200).json(course);
-        })
-        .catch(error=>{
-          console.log(error);
-          res.status(500).json("error in fetching courses");
-        })
+      .select('-rating.eachrating -_id -instructorId')
+      .then(course=>{
+      if(!course)
+      {
+        res.status(400).json({Error:"no course found"});
+      }
+      res.status(200).json({course:course});
+     })
+      .catch(error=>{
+       // console.log(error);
+      res.status(500).json({Error:"error in fetching allcourses"});
+     })
+     
         }

@@ -59,10 +59,10 @@ const courseSchema = new schema({
     max:5,
     },
   }],
-  avgrating:{ 
-    type: Number,
-  require: false,
-  }
+},
+avgrating:{ 
+  type: Number,
+require: false,
 },
   language:{
     type: String,
