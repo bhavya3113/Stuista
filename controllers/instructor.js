@@ -59,8 +59,18 @@ exports.addCourse=(req,res,next)=>{
   const price = req.body.price;
   const language = req.body.language;
   const skillsLearned = req.body.skillsLearned;
-  const image = req.files.image[0];
-  const imageUrl = image.path;
+  const image = req.files.image;
+  
+  // console.log(image);
+  let imageUrl;
+  if(image){
+    
+  imageUrl = image[0].path;
+  // console.log(imageUrl);
+  }
+  else{
+    imageUrl = 'images\\image-not-found.png';
+  }
   const videos = req.files.video;
   const videosUrl =[];
   // console.log(req.files);
@@ -127,7 +137,7 @@ exports.addCourse=(req,res,next)=>{
    res.status(200).json({message:'course created and added to instructor dashboard'});
   })
   .catch(err=>{
-    // console.log("error in adding course to teacher's dashboard", err);
+    console.log("error in adding course to teacher's dashboard", err);
      res.status(400).json({Error: 'Error in adding course to instructor dashboard'});
   })
   .catch(err=>{
