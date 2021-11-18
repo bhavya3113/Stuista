@@ -4,7 +4,7 @@ const Instructor = require("../models/instructor");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
-  .select('-rating.eachrating -_id -instructorId -reviews._id')
+  .select('-rating.eachrating -instructorId -reviews._id')
   .then(course=>{
     if(!course)
     {
@@ -21,7 +21,7 @@ exports.allCourses=(req,res,next)=>{
 exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
   Course.find({category:categorywiseCourses})
-  .select('-rating.eachrating -_id -instructorId -reviews._id')
+  .select('-rating.eachrating -instructorId -reviews._id')
   .then(course=>{
     if(!course)
     {
@@ -39,7 +39,7 @@ exports.categorywise=(req,res,next)=>{
 exports.viewCourse=(req,res,next)=>{
   const courseId = req.params.courseid;
   Course.findById(courseId)
-  .select('-rating.eachrating -_id -instructorId -reviews._id')
+  .select('-rating.eachrating -instructorId -reviews._id')
   .populate('reviews.user',{fullname:1,_id:0})
   .then(course=>{
     if(!course)
@@ -131,7 +131,7 @@ exports.addtocart=(req,res,next)=>{
       let totalprice=0;
       User.findById(userId)
       // User.findById({'_id': '6182558da75d18d6f2964024'})
-      .populate('cart',{'title':1,'instructorName':1,'price':1,'_id':0,'imageUrl':1})
+      .populate('cart',{'title':1,'instructorName':1,'price':1,'_id':1,'imageUrl':1})
       .exec()
       .then(user => {
         if(!user)
@@ -448,7 +448,7 @@ exports.addtocart=(req,res,next)=>{
         }
         // console.log(conditions);
       Course.find(conditions)
-      .select('-rating.eachrating -_id -instructorId')
+      .select('-rating.eachrating -instructorId -reviews._id')
       .then(course=>{
       if(!course)
       {
@@ -466,7 +466,7 @@ exports.addtocart=(req,res,next)=>{
         exports.search=(req,res,next)=>{
           const text = req.body.text;
           Course.find({ title: { $regex: text, $options: "xi"} })
-          .select('-rating.eachrating -_id -instructorId -reviews._id')
+          .select('-rating.eachrating -instructorId -reviews._id')
           .then(course=>{
             if(!course)
             {
