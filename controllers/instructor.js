@@ -260,7 +260,7 @@ exports.deleteCourse=(req,res,next)=>{
     instructor.course.pull(courseId);
     instructor.save();
     // path.resolve('./')+'\\'+imgpath,
-    fs.unlink((path.join(__dirname,'../',imgpath)) ,(err) => {
+    fs.unlink((path.join(__dirname,'../','images',path.basename(imgpath))) ,(err) => {
       if (err) throw err;
       // console.log(imgpath,'successfully deleted file');
     });
@@ -268,7 +268,7 @@ exports.deleteCourse=(req,res,next)=>{
     for(var i=0;i<length;i++)
     {
       // console.log(path.resolve('./')+'\\'+videopath[i]);
-      fs.unlink((path.join(__dirname,'../', videopath[i])), (err) => {
+      fs.unlink((path.join(__dirname,'../','videos',path.basename(videopath[i]))), (err) => {
         if (err) throw err;
         // console.log('successfully deleted file');
       });
