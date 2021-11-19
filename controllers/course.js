@@ -22,6 +22,7 @@ exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
   Course.find({category:categorywiseCourses})
   .select('-rating.eachrating -instructorId -reviews._id')
+  .populate('reviews.user',{fullname:1,_id:0})
   .then(course=>{
     if(!course)
     {

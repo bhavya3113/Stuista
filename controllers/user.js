@@ -69,6 +69,7 @@ exports.deleteProfile=(req,res,next)=>{
     return Instructor.findOne({"details": userId});
   })
   .then(instructor=>{
+    if(instructor){
     const length = instructor.course.length;
     for(var i=0;i<length;i++)
     {
@@ -77,7 +78,7 @@ exports.deleteProfile=(req,res,next)=>{
         throw err;
       });
     }
-    return Instructor.findOneAndRemove({"details": userId});
+    return Instructor.findOneAndRemove({"details": userId});}
   })
   .then(result=>{
     return res.status(200).json({message:'user deleted'})
