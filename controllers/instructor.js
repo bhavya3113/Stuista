@@ -69,7 +69,7 @@ exports.addCourse=(req,res,next)=>{
   // console.log(imageUrl);
   }
   else{
-    imageUrl = 'images\\image-not-found.png';
+    imageUrl = path.join('images','image-not-found.png');
   }
   const videos = req.files.video;
   const videosUrl =[];
@@ -167,8 +167,25 @@ exports.editCourse=(req,res,next)=>{
   const price = req.body.price;
   const language = req.body.language;
   const skillsLearned = req.body.skillsLearned;
-  const image = req.files.image[0];
-  const imageUrl = image.path;
+  const image = req.files.image;
+  
+  // console.log(image);
+  let imageUrl;
+  if(image){
+    
+  imageUrl = image[0].path;
+  // console.log(imageUrl);
+  }
+  else{
+    imageUrl = path.join('images','image-not-found.png');
+  }
+  const videos = req.files.video;
+  const videosUrl =[];
+  // console.log(req.files);
+  videos.forEach(video=>{
+    videosUrl.push(video.path);
+  })
+
 
   Instructor.findOne({'details':req.userId})
   .populate('details')
@@ -195,7 +212,7 @@ exports.editCourse=(req,res,next)=>{
     if(course.imageUrl && course.imageUrl !== imageUrl)
     {
       // console.log(path.resolve('./')+'\\'+course.imageUrl);
-      fs.unlink(path.resolve('./')+'\\'+course.imageUrl, (err) => {
+      fs.unlink((path.join(__dirname,'../','images',path.basename(imgpath))), (err) => {
       if (err) throw err;
       // console.log('successfully deleted file');
       });
@@ -211,6 +228,7 @@ exports.editCourse=(req,res,next)=>{
     course.language = language;
     course.skillsLearned = skillsLearned;
     course.imageUrl = imageUrl;
+    course.videosArray= videosUrl;
     course.save();
 
     res.status(201).json({message:"course editted successfully"});
