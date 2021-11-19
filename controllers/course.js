@@ -1,6 +1,9 @@
 const User = require("../models/users");
 const Course = require("../models/course");
 const Instructor = require("../models/instructor");
+const path =require("path");
+const fs = require("fs");
+const pdf = require("pdfkit");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
@@ -478,5 +481,50 @@ exports.addtocart=(req,res,next)=>{
           .catch(error=>{
             console.log(error);
             res.status(500).json({Error:"error in fetching allcourses"});
+          })
+        }
+
+        exports.syllabus=(req,res,next)=>{
+          const courseid = req.params.courseid;
+
+          Course.findById(courseid)
+          .then(course=>{
+            if(!course)
+            return res.status(400).json({Error:"No course Found"});
+            else{
+
+              const syllabusname="syllabus.pdf";
+              const syllabuspath = path.join('syllabus', syllabusname); 
+  
+              res.setHeader('Content-Type', 'application/pdf');
+              res.setHeader('Content-Disposition','inline');
+              const syllabuspdf = new pdf();
+
+              syllabuspdf.pipe(fs.createWriteStream(syllabuspath));
+
+              syllabuspdf.pipe(res);
+              syllabuspdf.fontSize(26).text(course.title,{align:'center'});
+              syllabuspdf.moveDown();
+              syllabuspdf.fontSize(18).text(`Course by ${course.instructorName}` );
+              syllabuspdf.moveDown();
+              syllabuspdf.fontSize(18).text('SYLLABUS',{align:'center'});
+              syllabuspdf.moveDown();
+              syllabuspdf.text('Topic - 1');
+              syllabuspdf.text('details');
+              syllabuspdf.moveDown();
+              syllabuspdf.text('Topic - 2');
+              syllabuspdf.text('details');
+              syllabuspdf.moveDown();
+              syllabuspdf.text('Topic - 3');
+              syllabuspdf.text('details');
+              syllabuspdf.moveDown();
+              syllabuspdf.text('Topic -4');
+              syllabuspdf.text('details');
+              syllabuspdf.end();
+            }
+          })
+          .catch(err=>{
+            console.log(err);
+            return res.status(400).json({Error:"Error in generating pdf"});
           })
         }

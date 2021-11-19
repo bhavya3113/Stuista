@@ -23,4 +23,7 @@ router.post("/:courseid/cart/remove",isAuth,courseController.removefromcart);
 router.post("/favourites/:coursename/:courseid",isAuth,courseController.addtofav);
 router.post("/:courseid/favourites/remove",isAuth,courseController.removefromfav);
 router.get("/:userid/favourites",isAuth,courseController.fav);
+
+router.get("/syllabus/:courseid/download",courseController.syllabus);
+
 module.exports=router;
