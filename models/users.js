@@ -27,8 +27,6 @@ const userSchema = new schema({
     type:schema.Types.ObjectId,
     ref:"course"
   }],
- 
-  
   cart:[{
     type:schema.Types.ObjectId,
     ref:"course"
@@ -37,7 +35,10 @@ const userSchema = new schema({
     type:schema.Types.ObjectId,
     ref:"course"
   }],
-
+  imageUrl:{
+    type: String,
+    require:false
+  }
 })
 
 module.exports = mongoose.model("users",userSchema);

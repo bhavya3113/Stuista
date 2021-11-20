@@ -2,18 +2,22 @@ const User = require("../models/users");
 const Course = require("../models/course");
 const Instructor = require("../models/instructor");
 const { validationResult } = require('express-validator');
-
+const bcrypt = require("bcryptjs");
+const path = require("path");
 
 exports.viewUserProfile=(req,res,next)=>{
-  const userId = req.params.userid;
-  User.findById(userId, 'fullname email')
-  .select('-_id')
-  .populate('mycourses favourites',{'_id':0,'imageUrl':1,'title':1,'duration':1,'price':1})
+  const userId = req.userId;
+  User.findById(userId, 'fullname email imageUrl')
+  .populate('mycourses favourites',{'_id':1,'imageUrl':1,'title':1,'duration':1,'price':1})
     .then(user => {
       if (!user) {
         return res.status(400).json({Error:"user not found"});
       }
-      res.status(200).json(user);
+      else{
+        if(!user.imageUrl)
+        user.imageUrl = path.join('images','image-noprofile.png');
+        return res.status(200).json(user);
+      }
     })
     .catch(err => {
       if (!err.statusCode) {
@@ -23,7 +27,7 @@ exports.viewUserProfile=(req,res,next)=>{
 }
 
 exports.editUserProfile=(req,res,next)=>{
-  const userId = req.params.userid;
+  const userId = req.userId;
   
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -32,7 +36,16 @@ exports.editUserProfile=(req,res,next)=>{
     throw error;
   }
   
-const fullname = req.body.fullname;
+  const fullname = req.body.fullname;
+  const image = req.files.image;
+  let imageUrl;
+  if(image){
+  imageUrl = image[0].path;
+  // console.log(imageUrl);
+  }
+  else{
+  imageUrl = path.join('images','image-noprofile.png');
+  }
 
   User.findById(userId)
   .then(user=>{
@@ -41,10 +54,9 @@ const fullname = req.body.fullname;
       return res.status(400).json({message:"user not found"});
     }
     user.fullname = fullname;
+    user.imageUrl = imageUrl;
     user.save();
-  })
-  .then(result=>{
-    res.status(201).json({message:"user profile  editted successfully"});
+    return res.status(201).json({message:"user profile  editted successfully"});
   })
   .catch(err=>{
     if (!err.statusCode) {
@@ -55,38 +67,83 @@ const fullname = req.body.fullname;
 }
 
 exports.deleteProfile=(req,res,next)=>{
-  const userId = req.params.userid;
+  const userId = req.userId;
 
   User.findById(userId)
   .then(user=>{
     if(!user)
       return res.status(400).json({Error:"user not found"});
-    if (userId !== req.userId)
-     return res.status(403).json({Error:"Not Authorized"});
-    return User.findByIdAndRemove(userId);
-  })
-  .then(result=>{
-    return Instructor.findOne({"details": userId});
-  })
-  .then(instructor=>{
-    if(instructor){
-    const length = instructor.course.length;
-    for(var i=0;i<length;i++)
-    {
-      Course.findByIdAndRemove(instructor.course[i],(err)=>{
+    
+    User.findByIdAndRemove(userId, err=>{
+      if(err)
+      {
+        return res.status(400).json({Error:"Error in deleting user"}); 
+      }
+    });
+     Instructor.findOne({"details": userId})
+     .then(instructor=>{
+     if(instructor){
+     const length = instructor.course.length;
+     for(var i=0;i<length;i++) 
+     {
+       Course.findByIdAndRemove(instructor.course[i],(err)=>{
         if(err)
         throw err;
+       });
+     }
+      Instructor.findOneAndRemove({"details": userId}, err=>{
+        if(err){
+          return res.status(400).json({Error:"Error in deleting instructor"}); 
+        }
       });
-    }
-    return Instructor.findOneAndRemove({"details": userId});}
-  })
-  .then(result=>{
-    return res.status(200).json({message:'user deleted'})
+    }})
+  return res.status(200).json({message:'user deleted'})
   })
   .catch(err=>{
     console.log(err);
     if (!err.statusCode) {
       err.statusCode = 500;
+    }
+  })
+}
+
+exports.changepassword=(req,res,next)=>{
+  const userid = req.userId;
+  const oldpassword = req.body.oldpassword;
+  const newpwd = req.body.newpwd;
+  const confirmnewpwd = req.body.confirmnewpwd;
+
+  User.findById(userid)
+  .then(user=>{
+    if(!user)
+     return res.status(400).json({Error:"user not found"});
+     else{
+      bcrypt.compare(oldpassword, user.password)
+      .then(isMatch=>{
+        if(!isMatch)
+        {
+          return res.status(400).json({Error:"Incorrect Password!"});
+        }
+        else{
+          if(newpwd != confirmnewpwd)
+            return res.status(422).json({Error:"Passwords do not match"});
+    
+          bcrypt.hash(newpwd, 12)
+          .then(hashedPassword => {
+              user.password = hashedPassword;
+              user.save();
+              res.status(200).json({message:"new password saved"});
+            })
+            .catch((err) => {
+              res.status(400).json({Error: "password not saved"});
+            });
+          }
+      })}
+    })
+    .catch(err=>{
+      if (!err.statusCode) {
+      err.statusCode = 500;
+      console.log(err);
     }
   })
 }

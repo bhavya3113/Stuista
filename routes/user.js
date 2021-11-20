@@ -7,9 +7,10 @@ const userController = require("../controllers/user");
 const isAuth = require("../middleware/isAuth");
 
 
-router.get("/profile/:userid",isAuth,userController.viewUserProfile);
-router.post("/edit-profile/:userid",isAuth,userController.editUserProfile);
-router.post("/delete/:userid",isAuth,userController.deleteProfile);
+router.get("/profile",isAuth,userController.viewUserProfile);
+router.post("/edit-profile",isAuth,userController.editUserProfile);
+router.post("/delete",isAuth,userController.deleteProfile);
+router.post("/changepassword",isAuth,userController.changepassword)
 
 module.exports=router;
 

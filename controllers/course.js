@@ -8,6 +8,7 @@ const pdf = require("pdfkit");
 exports.allCourses=(req,res,next)=>{
   Course.find({})
   .select('-rating.eachrating -instructorId -reviews._id')
+  .populate('reviews.user',{fullname:1,_id:0})
   .then(course=>{
     if(!course)
     {
