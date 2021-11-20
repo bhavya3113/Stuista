@@ -15,7 +15,7 @@ var emailregex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{
 exports.signup = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    res.status(422).json({ Error: "Validation Failed" });
+    return res.status(422).json({ Error: "Validation Failed" });
   }
 
 const fullname = req.body.fullname;
@@ -23,12 +23,12 @@ const email = req.body.email;
 const password = req.body.password;
 
 if (!(email && password && fullname)) {
-  res.status(400).send({Error:"All fields are required"});
+  return res.status(400).send({Error:"All fields are required"});
 }
 var validemail = emailregex.test(email);
 
 if (!validemail) {
-   res.status(422).json({ Error: "please enter a valid email" });
+  return res.status(422).json({ Error: "please enter a valid email" });
 }
 User.findOne({email:email})
 .then(user=>{
@@ -52,7 +52,7 @@ User.findOne({email:email})
       });
        onetimepwd.save();
       const e = mail.sendEmail(email,otp,fullname);
-      res.status(201).json({message:'Otp sent.Verify first.', email:email,fullname:fullname});
+      return res.status(201).json({message:'Otp sent.Verify first.', email:email,fullname:fullname});
     }
   }
   else{
@@ -105,19 +105,17 @@ exports.otpVerification =(req,res,next)=>{
   const email = req.body.email;
   const otp = req.body.otp;
   Otp.findOne({email:email}).sort({createdAt : -1})
-  .then(user=>{
-    if(!user)
+  .then(otpsent=>{
+    if(!otpsent)
     {
       return res.status(422).json({ Error: "Otp is expired" });
     }
-    if (user.otp !== otp) 
-    {
-        return res.status(422).json({ Error: "Wrong Otp" });
-    }
-    return User.findOne({email:email})
-    })
+    User.findOne({email:email})
     .then(user=>{
-      user.isVerified = "true";
+        // console.log(user);
+        // console.log(otpsent.otp,otp)
+      if (otpsent.otp == otp){
+      user.isVerified ="true";
       user.save();
       const accesstoken = jwt.sign(
         {
@@ -127,8 +125,12 @@ exports.otpVerification =(req,res,next)=>{
         process.env.ACCESS_TOKEN_KEY,
         { expiresIn: '24h' }
       );
-      res.status(200).json({"accesstoken":accesstoken,"user": user._id.toString()})
+      res.status(200).json({"accesstoken":accesstoken,"user": user._id.toString()})}
+      else{
+        return res.status(422).json({ Error: "Wrong Otp" });
+      }
     })
+  })
   .catch(err => {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -226,6 +228,11 @@ exports.resetPassword=(req,res,next)=>{
   const confirmPwd = req.body.cpassword;
    
   // console.log(email,newPwd,confirmPwd);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ Error: "Validation Failed" });
+  }
+   
       if(newPwd != confirmPwd)
       {
         return res.status(422).json({Error:"Passwords do not match"});
@@ -264,33 +271,26 @@ exports.login=(req,res,next)=>{
     error.data = errors.array();
     throw error;
   }
-  
+
   const email = req.body.email;
   const password = req.body.password;
 
   if (!(email && password)) {
-    res.status(400).send({Error:"All fields are required"});
+    return res.status(400).send({Error:"All fields are required"});
   }
   var validemail = emailregex.test(email);
   
-  if (!validemail) {
-     res.status(422).json({ Error: "please enter a valid email" });
+  if (!validemail){
+    return res.status(422).json({ Error: "please enter a valid email" });
   }
 
   let registeredUser;
   User.findOne({ email: email })
     .then(user => {
       if (!user) {
-        // const error = new Error('User is not registered.');
-        // error.statusCode = 401;
-        // throw error;
         return res.status(401).json({Error:"User is not registered"});
       }
       if (user.isVerified=="false") {
-        res.status(200).json({
-            Error: "user not verified. kindly check your mail for otp and verify your account"
-          })
-
         let otp = otpGenerator.generate(6, {
           alphabets: false,
           specialChars: false,
@@ -302,24 +302,21 @@ exports.login=(req,res,next)=>{
         });
          onetimepwd.save();
         
-        return mail.sendEmail(email,otp,user.fullname);
-        // const error = new Error('User not verified.Email has been sent for verification');
-        // error.statusCode = 401;
-        // throw error;
-
+        const m = mail.sendEmail(email,otp,user.fullname);
+          return res.status(400).json({
+            Error: "user not verified. kindly check your mail for otp and verify your account"
+          })
       }
       if(user.isVerified == "true"){
       registeredUser = user;
       return bcrypt.compare(password, user.password);}
     })
     .then(isEqual => {
-      if (!isEqual) {
-        // const error = new Error('Incorrect password!');
-        // error.statusCode = 401;
-        // throw error;
+      if(registeredUser)
+      {if (!isEqual) {
         return res.status(401).json({Error:"Incorrect Password!"});
       }
-
+      else{
       const accesstoken = jwt.sign(
         {
           email: registeredUser.email,
@@ -329,7 +326,7 @@ exports.login=(req,res,next)=>{
         { expiresIn: '24h' }
       );
       res.status(200).json({accesstoken,userId: registeredUser._id.toString(),instructor: registeredUser.verifiedasInstructor });
-    })
+    }}})
     .catch(err => {
       if (!err.statusCode) {
         err.statusCode = 500;
