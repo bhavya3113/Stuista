@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const schema = mongoose.Schema;
+const path = require("path");
 
 const userSchema = new schema({
   fullname:{
@@ -37,7 +38,7 @@ const userSchema = new schema({
   }],
   imageUrl:{
     type: String,
-    require:false
+    default:  path.join('images','image-noprofile.png')
   }
 })
 

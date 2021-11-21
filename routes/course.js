@@ -13,8 +13,7 @@ router.get("/search",courseController.search);
 router.get("/:category",courseController.categorywise);
 router.post("/buynow/:courseid",isAuth,courseController.buynow);
 router.post("/buyfromcart/:userid",isAuth,courseController.buyfromcart);
-router.post("/:courseid/rating",isAuth,courseController.rating);
-router.post("/:courseid/review",isAuth,courseController.addreviews);
+router.post("/:courseid/rating",isAuth,courseController.rateandreview);
 
 router.get("/:userid/cart",isAuth,courseController.Cart);
 router.post("/:coursename/:courseid",isAuth,courseController.addtocart);

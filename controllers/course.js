@@ -7,8 +7,8 @@ const pdf = require("pdfkit");
 
 exports.allCourses=(req,res,next)=>{
   Course.find({})
-  .select('-rating.eachrating -instructorId -reviews._id')
-  .populate('reviews.user',{fullname:1,_id:0})
+  .select(' -instructorId')
+  .populate('eachrating.user',{fullname:1,imageUrl:1})
   .then(course=>{
     if(!course)
     {
@@ -24,9 +24,9 @@ exports.allCourses=(req,res,next)=>{
 
 exports.categorywise=(req,res,next)=>{
   const categorywiseCourses = req.params.category;
-  Course.find({category:categorywiseCourses})
-  .select('-rating.eachrating -instructorId -reviews._id')
-  .populate('reviews.user',{fullname:1,_id:0})
+  Course.find({category:categorywiseCourses}) 
+  .select(' -instructorId')
+  .populate('eachrating.user',{fullname:1,imageUrl:1})
   .then(course=>{
     if(!course)
     {
@@ -44,8 +44,8 @@ exports.categorywise=(req,res,next)=>{
 exports.viewCourse=(req,res,next)=>{
   const courseId = req.params.courseid;
   Course.findById(courseId)
-  .select('-rating.eachrating -instructorId -reviews._id')
-  .populate('reviews.user',{fullname:1,_id:0})
+  .select(' -instructorId')
+  .populate('eachrating.user',{fullname:1,imageUrl:1})
   .then(course=>{
     if(!course)
     {
@@ -54,8 +54,8 @@ exports.viewCourse=(req,res,next)=>{
     res.status(200).json({course:course});
   })
   .catch(error=>{
-    // console.log(error);
-    res.status(500).json({Error:"error in fetching allcourses"});
+    console.log(error);
+    res.status(500).json({Error:"error in fetching course"});
   })
 }
 
@@ -153,7 +153,7 @@ exports.addtocart=(req,res,next)=>{
       })
     .catch(err=>{
       // console.log("error in displaying cart", err);
-      res.status(400).json({message: 'Error in displaying cart'});
+      res.status(400).json({Error: 'Error in displaying cart'});
     })
     }
 
@@ -309,11 +309,12 @@ exports.addtocart=(req,res,next)=>{
           })
         }
 
-        exports.rating=(req,res,next)=>{
+        exports.rateandreview=(req,res,next)=>{
           const courseId=req.params.courseid;
           const userid = req.userId;
           let total=0;
           const r = req.body.rate;
+          const userreview = req.body.userreview;
           
 
           Instructor.findOne({'details':userid})
@@ -322,7 +323,7 @@ exports.addtocart=(req,res,next)=>{
             {
               const courseindex = instructor.course.findIndex(courseid => courseId==courseid);
               if(courseindex !== -1)
-              return res.status(400).json({Error:'You can not rate your own course'});
+              return res.status(400).json({Error:'You can not rate and review your own course'});
             }
             else
               return User.findById(userid);
@@ -334,7 +335,7 @@ exports.addtocart=(req,res,next)=>{
               const mycoursesindex = user.mycourses.findIndex(courseid => courseId==courseid)
               if(mycoursesindex == -1)
               {
-                return res.status(400).json({Error:"Can't rate. Buy first."});
+                return res.status(400).json({Error:"Can't rate or review. Buy first."});
               }
               else
               return Course.findById(courseId)
@@ -345,88 +346,30 @@ exports.addtocart=(req,res,next)=>{
               else
               {
                 // console.log(course.rating.eachrating);
-            const ratingindex = course.rating.eachrating.findIndex(i=>(i.user)==userid)
+            const ratingindex = course.eachrating.findIndex(i=>(i.user)==userid)
             if(ratingindex == -1)
-            {
-                course.rating.eachrating[course.rating.eachrating.length] = {user:userid, rate:r};
-                // console.log(course.rating.eachrating);
-                course.rating.eachrating.forEach(r=>{
-                  total+=r.rate;
-                })
-                // console.log(total);
-                course.avgrating = total/(course.rating.eachrating.length);
-                  // console.log(course.rating.avgrating);
-                course.save();
-            }
+                course.eachrating[course.eachrating.length] = {user:userid, rate:r,userreview:userreview};
             else
-            {
-              course.rating.eachrating[ratingindex] = {user:userid, rate:r};
-              // console.log(course.rating.eachrating);
-              course.rating.eachrating.forEach(r=>{
+              course.eachrating[ratingindex] = {user:userid, rate:r,userreview:userreview};
+              // console.log(course.eachrating);
+            
+            course.eachrating.forEach(r=>{
                 total+=r.rate;
                 })
               // console.log(total);
-              course.avgrating = total/(course.rating.eachrating.length);
-                // console.log(course.rating.avgrating);
+              course.avgrating = total/(course.eachrating.length);
+                // console.log(course.avgrating);
               course.save();
-            }
-              return res.status(200).json({message:"rating added",rating:course.avgrating}); 
+
+              return res.status(200).json({message:"rating and review added",rating:course.avgrating,userreview:userreview}); 
             }
             })
           .catch(err=>{
             console.log(err);
-            res.status(400).json({Error: 'error in rating'});
+            res.status(400).json({Error: 'error in rating or reviewing'});
           })
         }
 
-        exports.addreviews=(req,res,next)=>{
-          const courseId=req.params.courseid;
-          const userid = req.userId;
-         
-          let name;
-          const userreview = req.body.userreview;
-          
-          Instructor.findOne({'details':userid})
-          .then(instructor=>{
-            if(instructor)
-            {
-              const courseindex = instructor.course.findIndex(courseid => courseId==courseid);
-              if(courseindex !== -1)
-              return res.status(400).json({Error:'You can not review your own course'});
-            }
-            else
-              return User.findById(userid);
-            })
-            .then(user=>{
-
-              if(!user)
-              return res.status(400).json({Error:"User not found"});
-              const mycoursesindex = user.mycourses.findIndex(courseid => courseId==courseid)
-              if(mycoursesindex == -1)
-              {
-                return res.status(400).json({Error:"Can't review. Buy first."});
-              }
-              else
-              {
-                name = user.fullname;
-                return Course.findById(courseId)
-              }
-            })
-            .then(course=>{
-              if(!course)
-              return res.status(400).json({Error:'Course does not exist'}); 
-              else
-              {
-                course.reviews[course.reviews.length] = {userreview:userreview, user:userid};
-                course.save();
-              }
-              return res.status(200).json({message:"review added", review:userreview,name:name}); 
-            })
-          .catch(err=>{
-            console.log(err);
-            res.status(400).json({Error: 'error in rating'});
-          })
-        }
 
       exports.filter=(req,res,next)=>{
          
@@ -453,7 +396,8 @@ exports.addtocart=(req,res,next)=>{
         }
         // console.log(conditions);
       Course.find(conditions)
-      .select('-rating.eachrating -instructorId -reviews._id')
+      .select(' -instructorId')
+      .populate('eachrating.user',{fullname:1,imageUrl:1})
       .then(course=>{
       if(!course)
       {
@@ -471,7 +415,8 @@ exports.addtocart=(req,res,next)=>{
         exports.search=(req,res,next)=>{
           const text = req.body.text;
           Course.find({ title: { $regex: text, $options: "xi"} })
-          .select('-rating.eachrating -instructorId -reviews._id')
+          .select(' -instructorId')
+          .populate('eachrating.user',{fullname:1,imageUrl:1})
           .then(course=>{
             if(!course)
             {
@@ -481,7 +426,7 @@ exports.addtocart=(req,res,next)=>{
           })
           .catch(error=>{
             console.log(error);
-            res.status(500).json({Error:"error in fetching allcourses"});
+            res.status(500).json({Error:"error in fetching courses"});
           })
         }
 

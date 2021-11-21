@@ -46,8 +46,8 @@ const courseSchema = new schema({
     type: Number,
     require:true
   },
-  rating:{
-    eachrating:[{
+ 
+  eachrating:[{
     user:{ 
       type: schema.Types.ObjectId,
       ref:'users'
@@ -58,8 +58,12 @@ const courseSchema = new schema({
     min:1,
     max:5,
     },
-  }],
-},
+    userreview:{
+      type: String,
+      require: false,
+      },
+}],
+
 avgrating:{ 
   type: Number,
 require: false,
@@ -79,18 +83,6 @@ require: false,
   videosArray:[{
     type: String,
     require: true
-  }],
-  reviews: [{
-    userreview:{
-      type: String,
-      require: false,
-      },
-      user:{ 
-        type: schema.Types.ObjectId,
-        ref:'users',
-        require: false,
-      },
-      createdAt: { type: Date, default: Date.now },
   }],
 },
 { timestamps: true }

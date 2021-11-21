@@ -13,11 +13,7 @@ exports.viewUserProfile=(req,res,next)=>{
       if (!user) {
         return res.status(400).json({Error:"user not found"});
       }
-      else{
-        if(!user.imageUrl)
-        user.imageUrl = path.join('images','image-noprofile.png');
-        return res.status(200).json(user);
-      }
+      return res.status(200).json(user);
     })
     .catch(err => {
       if (!err.statusCode) {
