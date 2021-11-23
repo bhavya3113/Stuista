@@ -10,18 +10,18 @@ router.get("/allCourses",courseController.allCourses);
 router.get("/show",courseController.filter);
 router.get("/viewcourse/:courseid",courseController.viewCourse);
 router.get("/search",courseController.search);
+router.get("/cart",isAuth,courseController.Cart);
+router.get("/favourites",isAuth,courseController.fav);
 router.get("/:category",courseController.categorywise);
 router.post("/buynow/:courseid",isAuth,courseController.buynow);
-router.post("/buyfromcart/:userid",isAuth,courseController.buyfromcart);
-router.post("/:courseid/rating",isAuth,courseController.rateandreview);
+router.post("/buyfromcart",isAuth,courseController.buyfromcart);
+router.post("/rating/:courseid",isAuth,courseController.rateandreview);
 
-router.get("/:userid/cart",isAuth,courseController.Cart);
-router.post("/:coursename/:courseid",isAuth,courseController.addtocart);
-router.post("/:courseid/cart/remove",isAuth,courseController.removefromcart);
+router.post("/addtocart/:courseid",isAuth,courseController.addtocart);
+router.post("/removefromcart/:courseid",isAuth,courseController.removefromcart);
 
-router.post("/favourites/:coursename/:courseid",isAuth,courseController.addtofav);
-router.post("/:courseid/favourites/remove",isAuth,courseController.removefromfav);
-router.get("/:userid/favourites",isAuth,courseController.fav);
+router.post("/addtofavourites/:courseid",isAuth,courseController.addtofav);
+router.post("/removefromfavourites/:courseid",isAuth,courseController.removefromfav);
 
 router.get("/syllabus/:courseid/download",courseController.syllabus);
 

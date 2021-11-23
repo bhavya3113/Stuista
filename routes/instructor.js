@@ -12,8 +12,8 @@ router.post("/create-profile",isAuth,instructorController.createinstructorProfil
 router.post("/addcourse",isAuth,instructorController.addCourse);
 router.post("/editcourse/:courseid",isAuth,instructorController.editCourse);
 router.post("/deletecourse/:courseid",isAuth,instructorController.deleteCourse);
-router.post("/deleteprofile/:userid",isAuth,instructorController.deleteinstructorprofile);
-router.get("/viewprofile/:userid",isAuth,instructorController.viewinstructorprofile);
-router.post("/editprofile/:userid",isAuth,instructorController.editinstructorprofile);
+router.post("/deleteprofile",isAuth,instructorController.deleteinstructorprofile);
+router.get("/viewprofile",isAuth,instructorController.viewinstructorprofile);
+router.post("/editprofile",isAuth,instructorController.editinstructorprofile);
 module.exports=router;
 

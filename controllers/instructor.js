@@ -131,13 +131,11 @@ exports.addCourse=(req,res,next)=>{
         }
     }) 
     .clone()
-    .populate('mycourses')
-  })
-  .then(result=>{
-   res.status(200).json({message:'course created and added to instructor dashboard'});
+    .populate('mycourses');
+    return res.status(200).json({message:'course created and added to instructor dashboard'});
   })
   .catch(err=>{
-    console.log("error in adding course to teacher's dashboard", err);
+    // console.log("error in adding course to teacher's dashboard", err);
      res.status(400).json({Error: 'Error in adding course to instructor dashboard'});
   })
   .catch(err=>{
@@ -179,13 +177,13 @@ exports.editCourse=(req,res,next)=>{
   else{
     imageUrl = path.join('images','image-not-found.png');
   }
-  const videos = req.files.video;
+  
+  const videos = req.files.video; 
   const videosUrl =[];
-  // console.log(req.files);
+  if(videos){
   videos.forEach(video=>{
     videosUrl.push(video.path);
-  })
-
+  })}
 
   Instructor.findOne({'details':req.userId})
   .populate('details')
@@ -201,9 +199,8 @@ exports.editCourse=(req,res,next)=>{
     {
       return res.status(403).json({Error:"Since, you have not created this course,you are not allowed to make changes in it"});
     }
-    return Course.findById(courseId);
-  })
-  .then(course=>{
+    Course.findById(courseId)
+   .then(course=>{
     if(!course)
     {
       return res.status(400).json({Error:"course not found"});
@@ -212,7 +209,7 @@ exports.editCourse=(req,res,next)=>{
     if(course.imageUrl && course.imageUrl !== imageUrl)
     {
       // console.log(path.resolve('./')+'\\'+course.imageUrl);
-      fs.unlink((path.join(__dirname,'../','images',path.basename(imgpath))), (err) => {
+      fs.unlink((path.join(__dirname,'../','images',path.basename(imageUrl))), (err) => {
       if (err) throw err;
       // console.log('successfully deleted file');
       });
@@ -232,6 +229,7 @@ exports.editCourse=(req,res,next)=>{
     course.save();
 
     res.status(201).json({message:"course editted successfully"});
+  })
   })
   .catch(err=>{
     if (!err.statusCode) {
@@ -260,9 +258,8 @@ exports.deleteCourse=(req,res,next)=>{
       videopath.push(course.videosArray[i]);
     }
     // console.log(videopath);
-    return Instructor.findOne({'details':req.userId})
-  })
-  .then(instructor=>{
+    Instructor.findOne({'details':req.userId})
+    .then(instructor=>{
     
     if(!instructor)
     {
@@ -291,12 +288,15 @@ exports.deleteCourse=(req,res,next)=>{
         // console.log('successfully deleted file');
       });
     }
-
-    return Course.findByIdAndRemove(courseId);}
+    Course.findByIdAndRemove(courseId,err=>{
+      if(err){
+        return res.status(400).json({Error:"Error in deleting instructor"}); 
+      };
+    })
+        return res.status(200).json({message:'course deleted'});
+  }
   })
-  .then(result=>{
-    return res.status(200).json({message:'course deleted'});
-  })
+})
     //   .then(result=>{
   //     // User.updateMany({ 'cart': courseId },{$pull:{ 'cart':courseId}});
   //      res.status(200).json('course deleted');
@@ -310,7 +310,7 @@ exports.deleteCourse=(req,res,next)=>{
 }
 
 exports.deleteinstructorprofile = (req,res,next)=>{
-  const userId = req.params.userid;
+  const userId = req.userId;
 
   User.findById(userId)
   .then(user=>{
@@ -319,13 +319,11 @@ exports.deleteinstructorprofile = (req,res,next)=>{
       
     if(user.verifiedasInstructor == "false")
     return res.status(400).json({Error:"User is not an instructor"});
-    if (userId !== req.userId)
-     return res.status(403).json({Error:"Not Authorized"});
+
      user.verifiedasInstructor ="false";
      user.save();
-     return Instructor.findOne({"details": userId});
-  })
-  .then(instructor=>{
+    Instructor.findOne({"details": userId})
+    .then(instructor=>{
     const length = instructor.course.length;
     for(var i=0;i<length;i++)
     {
@@ -333,11 +331,12 @@ exports.deleteinstructorprofile = (req,res,next)=>{
         if(err)
         throw err;
       });
-    }
-    return Instructor.findOneAndRemove({"details": userId});
+    }Instructor.findOneAndRemove({"details": userId},err=>{
+      if(err){
+        return res.status(400).json({Error:"Error in deleting instructor"}); 
+      }});
   })
-  .then(result=>{
-    return res.status(200).json({message:"Instructor profile deleted"});
+  return res.status(200).json({message:"Instructor profile deleted"});
   })
   .catch(err=>{
     if (!err.statusCode) {
@@ -347,10 +346,10 @@ exports.deleteinstructorprofile = (req,res,next)=>{
 }
 
 exports.viewinstructorprofile = (req,res,next)=>{
-  const userId = req.params.userid;
+  const userId = req.userId;
   Instructor.findOne({'details': userId})
   .select('-_id')
-  .populate('details course',{'fullname':1,'email':1,'_id':0,'imageUrl':1,'title':1,'duration':1,'price':1})
+  .populate('details course',{'fullname':1,'email':1,'imageUrl':1,'title':1,'duration':1,'price':1})
     .then(instructor => {
       if (!instructor) {
         return res.status(400).json({Error:"instructor not found"});
@@ -358,14 +357,14 @@ exports.viewinstructorprofile = (req,res,next)=>{
       res.status(200).json(instructor);
     })
     .catch(err => {
-      if (!err.statusCode) {
+      if (!err.statusCode){
         err.statusCode = 500;
       }
     });
 }
 
 exports.editinstructorprofile = (req,res,next)=>{
-  const userId = req.params.userid;
+  const userId = req.userId;
   
   const experience = req.body.experience;
   const areaofexpertise = req.body.areaofexpertise;
@@ -374,17 +373,15 @@ exports.editinstructorprofile = (req,res,next)=>{
   .then(instructor=>{
   if(!instructor)
   {
-    return res.status(400).json({message:"instructor not found"});
+    return res.status(400).json({Error:"instructor not found"});
   }
 
   instructor.experience = experience;
   instructor.areaofexpertise = areaofexpertise;
   instructor.save();
-})
-.then(result=>{
-  res.status(201).json({message:"instructor profile  editted successfully"});
-})
-.catch(err=>{
+  return res.status(201).json({message:"instructor profile  editted successfully"});
+ })
+ .catch(err=>{
   if (!err.statusCode) {
     err.statusCode = 500;
     console.log(err);

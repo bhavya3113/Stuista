@@ -69,18 +69,15 @@ exports.addtocart=(req,res,next)=>{
   .then(course=>{
     if(!course)
       return res.status(400).json({Error:'Course does not exist'}); 
-    else
-    return Instructor.findOne({'details':userId});
-  })
-  .then(instructor=>{
+     Instructor.findOne({'details':userId})
+    .then(instructor=>{
     if(instructor)
     {
       const courseindex = instructor.course.findIndex(courseid => courseId==courseid);
       if(courseindex !== -1)
         return res.status(400).json({Error:'You can not add your own course to your cart'}); 
     }
-    return User.findById(userId)
-  })
+   User.findById(userId)
   .then(user=>{
     if(!user)
     {
@@ -97,6 +94,7 @@ exports.addtocart=(req,res,next)=>{
     }
      return res.status(200).json({message:'Added to cart'});
     })
+  })})
   .catch(err=>{
     // console.log("error in adding to cart", err);
      res.status(400).json({Error: 'Error in adding to cart' });
@@ -118,11 +116,8 @@ exports.addtocart=(req,res,next)=>{
       {
        return res.status(400).json({Error:'Not in cart'});
       }
-     else
-     {
       user.cart.splice(index,1);
       user.save(); 
-     }
      return res.status(200).json({message:'Removed from cart'});
     })
     .catch(err=>{
@@ -132,11 +127,11 @@ exports.addtocart=(req,res,next)=>{
     }
 
     exports.Cart =(req,res,next)=>{
-      const userId = req.params.userid;
+      const userId = req.userId;
       let totalprice=0;
       User.findById(userId)
       // User.findById({'_id': '6182558da75d18d6f2964024'})
-      .populate('cart',{'title':1,'instructorName':1,'price':1,'_id':1,'imageUrl':1})
+      .populate('cart',{'title':1,'instructorName':1,'price':1,'imageUrl':1})
       .exec()
       .then(user => {
         if(!user)
@@ -152,7 +147,7 @@ exports.addtocart=(req,res,next)=>{
         res.status(200).json({'YourCart':course,'length':length,'price':totalprice});
       })
     .catch(err=>{
-      // console.log("error in displaying cart", err);
+      console.log("error in displaying cart", err);
       res.status(400).json({Error: 'Error in displaying cart'});
     })
     }
@@ -166,9 +161,7 @@ exports.addtocart=(req,res,next)=>{
       .then(course=>{
         if(!course)
           return res.status(400).json({Error:'Course does not exist'}); 
-        else
-          return User.findById(userId)
-      })
+      User.findById(userId)
       .then(user=>{
         if(!user)
         {
@@ -185,6 +178,7 @@ exports.addtocart=(req,res,next)=>{
         }
          return res.status(200).json({message:'Added to favourites'});
         })
+      })
       .catch(err=>{
         // console.log("error in adding to favourites", err);
          res.status(400).json({Error: 'Error in adding to favourites' });
@@ -201,17 +195,14 @@ exports.addtocart=(req,res,next)=>{
           {
              return res.status(400).json('User does not exist'); 
           }
-          const index = user.cart.findIndex(courseid => courseId==courseid)
+          const index = user.favourites.findIndex(courseid => courseId==courseid)
           if(index==-1)
           {
            return res.status(400).json({Error:'Not in favourites'});
           }
-         else
-         {
           user.favourites.splice(index,1);
           user.save(); 
-         }
-         return res.status(200).json({Error:'Removed from favourites'});
+          return res.status(200).json({Error:'Removed from favourites'});
         })
         .catch(err=>{
           // console.log("error in removing from favourites", err);
@@ -220,9 +211,9 @@ exports.addtocart=(req,res,next)=>{
         }
     
         exports.fav =(req,res,next)=>{
-          const userId = req.params.userid;
+          const userId = req.userId;
           User.findById(userId)
-          .populate('favourites')
+          .populate('favourites',{'title':1,'instructorName':1,'price':1,'imageUrl':1})
           .exec()
           .then(user => {
             if(!user)
@@ -230,7 +221,7 @@ exports.addtocart=(req,res,next)=>{
               return res.status(400).json({Error:'User not found'}); 
             }
             const course = user.favourites;
-            res.status(200).json({course:course});
+            res.status(200).json({'favourites':course});
           })
         .catch(err=>{
           // console.log("error in displaying favourites", err);
@@ -250,8 +241,7 @@ exports.addtocart=(req,res,next)=>{
               if(courseindex !== -1)
                 return res.status(400).json({Error:'You can not buy your own course'}); 
             }
-            return User.findById(userid)
-          })
+          User.findById(userid)
           .then(user=>{
             if(!user)
             {
@@ -270,16 +260,16 @@ exports.addtocart=(req,res,next)=>{
             user.mycourses.push(courseId);
             user.save();
              return res.status(200).json({message:"payment successful"});
-          })
+          }) })
           .catch(err=>{
-            console.log(err);
+            // console.log(err);
             res.status(400).json({Error:'payment unsuccessful'});
           })
         }
 
         exports.buyfromcart=(req,res,next)=>{
           let totalprice=0;
-          const userid = req.params.userid;
+          const userid = req.userId;
           User.findById(userid)
           .populate('cart')
           .then(user=>{
@@ -289,7 +279,7 @@ exports.addtocart=(req,res,next)=>{
             }
             if(user.cart.length == 0)
             {
-              res.status(400).json({Error:'Cart is empty'});
+              return res.status(400).json({Error:'Cart is empty'});
             }
             const length =  user.cart.length;
             for(var i=0;i<length;i++)
@@ -299,8 +289,6 @@ exports.addtocart=(req,res,next)=>{
             }
             user.cart=[];
             user.save();
-          })
-          .then(result=>{
             return res.status(200).json({message:"payment successful",totalprice:totalprice});
           })
           .catch(err=>{
@@ -470,7 +458,7 @@ exports.addtocart=(req,res,next)=>{
             }
           })
           .catch(err=>{
-            console.log(err);
+            // console.log(err);
             return res.status(400).json({Error:"Error in generating pdf"});
           })
         }
