@@ -131,7 +131,7 @@ exports.addtocart=(req,res,next)=>{
       let totalprice=0;
       User.findById(userId)
       // User.findById({'_id': '6182558da75d18d6f2964024'})
-      .populate('cart',{'title':1,'instructorName':1,'price':1,'imageUrl':1})
+      .populate('cart')
       .exec()
       .then(user => {
         if(!user)
@@ -213,7 +213,7 @@ exports.addtocart=(req,res,next)=>{
         exports.fav =(req,res,next)=>{
           const userId = req.userId;
           User.findById(userId)
-          .populate('favourites',{'title':1,'instructorName':1,'price':1,'imageUrl':1})
+          .populate('favourites')
           .exec()
           .then(user => {
             if(!user)

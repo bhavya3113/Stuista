@@ -8,7 +8,7 @@ const path = require("path");
 exports.viewUserProfile=(req,res,next)=>{
   const userId = req.userId;
   User.findById(userId, 'fullname email imageUrl')
-  .populate('mycourses favourites',{'_id':1,'imageUrl':1,'title':1,'duration':1,'price':1})
+  .populate('mycourses favourites')
     .then(user => {
       if (!user) {
         return res.status(400).json({Error:"user not found"});

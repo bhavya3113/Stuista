@@ -349,7 +349,7 @@ exports.viewinstructorprofile = (req,res,next)=>{
   const userId = req.userId;
   Instructor.findOne({'details': userId})
   .select('-_id')
-  .populate('details course',{'fullname':1,'email':1,'imageUrl':1,'title':1,'duration':1,'price':1})
+  .populate('details course',{"password":0,"isVerified":0,"verifiedasInstructor":0,})
     .then(instructor => {
       if (!instructor) {
         return res.status(400).json({Error:"instructor not found"});
