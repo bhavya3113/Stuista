@@ -313,7 +313,6 @@ exports.addtocart=(req,res,next)=>{
               if(courseindex !== -1)
               return res.status(400).json({Error:'You can not rate and review your own course'});
             }
-            else
               return User.findById(userid);
             })
             .then(user=>{
